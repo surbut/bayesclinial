@@ -1,0 +1,100 @@
+---
+title: "orbita"
+output: html_document
+date: "2023-12-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "Bayesian Analysis of ORBITA Trials"
+output: html_document
+author: Sarah Urbut, MD PhD
+---
+
+## Bayesian Analysis of Exercise Time in ORBITA Trials
+
+In this analysis, we employ Bayesian methods to understand the impact of percutaneous coronary intervention (PCI) on exercise time in patients with stable angina. We incorporate data from two different phases of the ORBITA trials: the initial 2018 study (considered as our prior) and a subsequent 2023 study (used to form our likelihood).
+
+### Prior (2018 ORBITA Study)
+
+Our prior belief is based on the 2018 ORBITA study. The mean difference in exercise time between the PCI and placebo groups was reported as:
+
+- **Mean Difference**: \( \mu_{\text{prior}} = 16.6 \) seconds
+- **95% Confidence Interval**: -8.9 to 42.0 seconds
+
+From this information, we calculate the standard deviation (\( \sigma_{\text{prior}} \)) of the prior distribution. The prior distribution represents our initial belief about the effectiveness of PCI before considering the new data.
+
+### Likelihood (2023 ORBITA Study)
+
+The likelihood is informed by the 2023 ORBITA study, which provides updated results:
+
+- **Mean Difference**: \( \mu_{\text{likelihood}} = 59.5 \) seconds
+- **95% Confidence Interval**: 16 to 103 seconds
+
+Again, we calculate the standard deviation (\( \sigma_{\text{likelihood}} \)) for the likelihood, which reflects our uncertainty about the effect size based on the new study.
+
+### Posterior Distribution
+
+The posterior distribution combines our prior belief with the new evidence from the likelihood. It is calculated as follows:
+
+- **Posterior Mean**: \( \mu_{\text{posterior}} \)
+- **Posterior Standard Deviation**: \( \sigma_{\text{posterior}} \)
+
+These parameters are computed using the formulae for conjugate priors in Bayesian analysis. The posterior distribution represents our updated belief about the effectiveness of PCI after taking into account the new data.
+
+### Interpretation
+
+The analysis aims to visually compare the prior, likelihood, and posterior distributions. Additionally, we highlight the area where the posterior distribution suggests a positive effect (exercise time difference greater than zero) and provide the 95% credible interval for the posterior. This approach allows us to assess how our beliefs about the effectiveness of PCI have evolved with the incorporation of new data.
+
+---
+```{r,eval=TRUE,echo=FALSE}
+# Load necessary libraries
+library(ggplot2)
+
+# Prior information based on historical data (2018 group)
+prior_mean_diff <- 16.6  # Mean difference in exercise time (PCI - Placebo)
+prior_ci_width <- 42.0 - (-8.9)  # Width of the CI
+prior_sd_diff <- (prior_ci_width / 2) / 1.96  # Estimating SD from CI
+
+# Likelihood information based on new data (2023 group)
+likelihood_mean_diff <- 59.5  # Mean difference in exercise time (PCI - Placebo)
+likelihood_ci_width <- 103 - 16  # Width of the CI
+likelihood_sd_diff <- (likelihood_ci_width / 2) / 1.96  # Estimating SD from CI
+
+# Posterior distribution calculations
+posterior_variance_diff <- 1 / ((1 / prior_sd_diff^2) + (1 / likelihood_sd_diff^2))
+posterior_mean_diff <- posterior_variance_diff * ((prior_mean_diff / prior_sd_diff^2) + (likelihood_mean_diff / likelihood_sd_diff^2))
+posterior_sd_diff <- sqrt(posterior_variance_diff)
+
+# Generating data for plotting
+x_values <- seq(-100, 200, length.out = 1000)
+prior_data <- data.frame(x = x_values, y = dnorm(x_values, mean = prior_mean_diff, sd = prior_sd_diff), type = "Prior")
+likelihood_data <- data.frame(x = x_values, y = dnorm(x_values, mean = likelihood_mean_diff, sd = likelihood_sd_diff), type = "Likelihood")
+posterior_data <- data.frame(x = x_values, y = dnorm(x_values, mean = posterior_mean_diff, sd = posterior_sd_diff), type = "Posterior")
+
+# Combine data
+combined_data <- rbind(prior_data, likelihood_data, posterior_data)
+
+# Calculate the 95% credible intervals for the posterior
+ci_lower <- posterior_mean_diff - qnorm(0.975) * posterior_sd_diff
+ci_upper <- posterior_mean_diff + qnorm(0.975) * posterior_sd_diff
+
+# Plotting the distributions with 95% CIs and area greater than 0 shaded
+ggplot(combined_data, aes(x = x, y = y, color = type)) +
+  geom_line() +
+  geom_ribbon(data = subset(combined_data, type == "Posterior" & x > 0), 
+              aes(ymin = 0, ymax = y, fill = type), alpha = 0.2) +
+  geom_vline(xintercept = ci_lower, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = ci_upper, linetype = "dashed", color = "red") +
+  scale_color_manual(values = c("blue", "green", "red")) +
+  scale_fill_manual(values = c("blue", "green", "red")) +
+  xlab("Difference in Exercise Time (seconds)") +
+  ylab("Density") + labs(scale="P(T>0|Data")+
+  ggtitle("Prior, Likelihood, and Posterior Distributions") +
+  theme_classic()
+```
+
+Here, we find that there is a `r 100*(1-pnorm(q = 0,mean = posterior_mean_diff, sd = posterior_sd_diff))` % chance that the exercise difference between cases and controls was greater than 0 seconds using the skeptical historical prior, and that the 95% Credible interval is from `r paste0("[",round(ci_lower,2),",",round(ci_upper,2),"]")`.

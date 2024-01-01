@@ -1,0 +1,435 @@
+---
+title: "Clear Outcomes Trial"
+output: html_document
+date: "2023-12-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Bayesian Model with Conjugate Multivariate Normal Priors
+
+First let's plot the primary outcomes under a flat (N(0,1e6)) prior which approaches the frequentist analysis, and two skeptical (small \sigma^2) prior.
+
+\item We can see that under the flat prior analysis, the credible interval should approach the confidence interval
+\item With increasinly skeptical priors, we become less confident that the effect is truly non 0
+
+We use the empircal bayes normal mean here, namely that all distributions center around a mean of 0, and allow the confidence in the error (the 'spike or slab') to determine the amount of skepticism (shrinkage).
+
+```{r cars}
+# Install necessary packages if not already installed
+if (!require("metafor")) install.packages("metafor")
+library(metafor)
+library(reshape)
+library(ggplot2)
+library(MASS)
+library(gridExtra)
+# Your data from the table (replace with your actual values)
+events_treatment <- c(819, 575, 261, 435, 135, 269, 434)
+events_placebo <- c(927, 663, 334, 529, 158, 257, 420)
+n_treatment <- rep(6992, 7)  # Same N for all treatment groups
+n_placebo <- rep(6978, 7)  # Same N for all placebo groups
+
+# Convert proportions to log odds ratios
+log_or <- log((events_treatment / (n_treatment - events_treatment)) /
+              (events_placebo / (n_placebo - events_placebo)))
+
+# Standard errors for the log odds ratios, derived from the CIs
+ci_lower <- c(0.79, 0.76, 0.66, 0.72, 0.67, 0.88, 0.90) # replace with actual lower CI values
+ci_upper <- c(0.96, 0.96, 0.91, 0.92, 1.07, 1.24, 1.18) # replace with actual upper CI values
+se_log_or <- (log(ci_upper) - log(ci_lower)) / (2 * qnorm(0.975))
+
+# Prior distributions
+# Flat prior (mean = 0, large variance)
+flat_prior <- list(mu = 0, sigma = 1e6)
+
+# Skeptical priors (mean = 0, smaller variance)
+prior_mu <- 0
+prior_sigma <- c(0.5*se_log_or)  # replace with your 7 sigma values
+# Create a list of prior lists, one for each set of log_or and se_log_or
+prior_list1 <- lapply(prior_sigma, function(sigma) list(mu = prior_mu, sigma = sigma))
+
+
+prior_sigma <- c(0.1*se_log_or)  # replace with your 7 sigma values
+# Create a list of prior lists, one for each set of log_or and se_log_or
+prior_list2 <- lapply(prior_sigma, function(sigma) list(mu = prior_mu, sigma = sigma))
+
+
+# Function to calculate the posterior
+calc_posterior <- function(log_or, se, prior) {
+  var_prior <- prior$sigma^2
+  var_data <- se^2
+  var_post <- 1 / (1 / var_prior + 1 / var_data)
+  mu_post <- var_post * (log_or / var_data + prior$mu / var_prior)
+  lower_CI=qnorm(0.025,mean=mu_post,sd = sqrt(var_post))
+  upper_CI=qnorm(0.975,mean=mu_post,sd = sqrt(var_post))
+  return(list(mu = mu_post, sigma = sqrt(var_post),p0=pnorm(0,mean = mu_post,sd=sqrt(var_post))))
+}
+
+
+# You can then summarize the posterior distributions as needed.
+```
+
+## Summary primary outcomes
+
+```{r}
+
+
+post_flat <- matrix(unlist(mapply(calc_posterior, log_or, se_log_or, MoreArgs = list(prior = flat_prior), SIMPLIFY = FALSE)),byrow=T,ncol=3,dimnames = list(rep(paste0("Primary Outcome ",1:7)),c("mu1","sigma1","p(logOR<0|data)")))
+
+post_skeptical_1 <- matrix(unlist(mapply(calc_posterior, log_or, se_log_or,prior_list1, SIMPLIFY = FALSE)),byrow=TRUE,ncol=3,dimnames = list(rep(paste0("Primary Outcome ",1:7)),c("mu1","sigma1","p(logOR<0|data)")))
+
+post_skeptical_2 <- matrix(unlist( mapply(calc_posterior, log_or, se_log_or, prior_list2, SIMPLIFY = FALSE)),byrow=T,ncol=3,dimnames = list(rep(paste0("Primary Outcome ",1:7)),c("mu1","sigma1","p(logOR<0|data)")))
+
+
+```
+
+For the flat prior, we see the results are identical to table 1:
+
+`r post_flat`.
+
+For the skeptical prior 1, where we are twice as confident in the prior (with mass at exactly 0) then the data, we see a mean closer to no difference (logOR of 0)
+
+`r post_skeptical_1`.
+
+For the skeptical prior 2, where we are ten time as confident in the prior (with mass at exactly 0) then the data, we see a mean almost at exactly no difference (logOR of 0)
+
+`r post_skeptical_2`
+
+```{r pressure, echo=FALSE}
+# Function to calculate the posterior and plot the distributions
+library(ggplot2)
+library(reshape2)  # For melting data frames
+library(gridExtra)  # For arranging plots
+
+plot_distributions <- function(log_or, se, prior, endpoint_name) {
+  # Create a sequence of x values for plotting the distributions
+  x_vals <- seq(from = -1, to = 1, length.out = 1000)
+
+  # Define distributions
+  likelihood <- dnorm(x_vals, mean = log_or, sd = se)
+  prior_dist <- dnorm(x_vals, mean = prior$mu, sd = prior$sigma)
+  posterior <- calc_posterior(log_or, se, prior)
+  post_dist <- dnorm(x_vals, mean = posterior$mu, sd = posterior$sigma)
+
+  # Calculate the 95% CI for the posterior distribution
+  ci_lower <- qnorm(0.025, posterior$mu, posterior$sigma)
+  ci_upper <- qnorm(0.975, posterior$mu, posterior$sigma)
+
+  # Prepare data for ggplot
+  plot_data <- data.frame(x = x_vals, Likelihood = likelihood, Prior = prior_dist, Posterior = post_dist)
+  plot_data <- melt(plot_data, id.vars = "x")
+
+  # Create the plot
+  p <- ggplot(plot_data, aes(x = x, y = value, color = variable)) +
+    geom_line() +
+    geom_ribbon(data = subset(plot_data, variable == "Posterior" & x < 0), 
+                aes(ymin = 0, ymax = value, fill = variable), alpha = 0.2) +
+    geom_vline(xintercept = ci_lower, linetype = "dashed", color = "black") +
+    geom_vline(xintercept = ci_upper, linetype = "dashed", color = "black") +
+    annotate("text", x = 1, y = max(plot_data$value), label = sprintf("95%% CI: [%.2f, %.2f]", ci_lower, ci_upper), hjust = 1, vjust = 1, size = 3) +
+    scale_color_manual(values = c("Likelihood" = "blue", "Prior" = "red", "Posterior" = "green")) +
+    scale_fill_manual(values = c("Posterior" = "Purple")) +
+    labs(title = endpoint_name, x = "Log Odds Ratio", y = "Density",fill="P(x<0|Data)",col="Distribution") +
+    theme_classic() +
+    xlim(-1, 1) # Set x limits
+
+  return(p)
+}
+
+
+flat_prior <- list(mu = 0, sigma = 1e6)
+# Skeptical priors (mean = 0, smaller variance)
+skeptical_prior_1 <- list(mu = 0, sigma = 0.5*se_log_or[1])
+skeptical_prior_2 <- list(mu = 0, sigma = 0.1*se_log_or[1])
+
+
+plot_primary <- plot_distributions(log_or = log_or[1],se = se_log_or[1], flat_prior, "Flat Prior")
+plot_secondary1 <- plot_distributions(log_or = log_or[1],se = se_log_or[1], prior = skeptical_prior_1, "Skeptical 1")
+plot_secondary2 <- plot_distributions(log_or = log_or[1],se = se_log_or[1],prior=skeptical_prior_2, "Skeptical 2")
+
+library(ggpubr)
+# Arrange the plots in a single row
+ggpubr::ggarrange(plot_primary, plot_secondary1, plot_secondary2, nrow = 1,common.legend=TRUE)
+
+
+```
+
+## Secondary outcomes
+
+We assume the likelihood for the log odds ratios (logOR) of primary and secondary outcomes to be normally distributed:
+
+$$
+\text{logOR}_{\text{primary}} \sim N(\mu_{\text{primary}}, \sigma^2_{\text{primary}})
+$$
+
+$$
+\text{logOR}_{\text{secondary}} \sim N(\mu_{\text{secondary}}, \sigma^2_{\text{secondary}})
+$$
+
+Where:
+- $\mu$ represents the mean logOR for the primary and secondary outcomes.
+- $\sigma^2$ represents the variance of the logOR for the primary and secondary outcomes.
+
+We specify conjugate multivariate normal priors for $\mu_{\text{primary}}$ and $\mu_{\text{secondary}}$:
+
+$$
+\begin{bmatrix}
+\mu_{\text{primary}} \\
+\mu_{\text{secondary}}
+\end{bmatrix}
+\sim N
+\left(
+\begin{bmatrix}
+0 \\
+0
+\end{bmatrix},
+\begin{bmatrix}
+\tau^2_{\text{primary}} & 0 \\
+0 & \tau^2_{\text{secondary}}
+\end{bmatrix}
+\right)
+$$
+
+Where:
+- $\tau^2_{\text{primary}}$ is the variance of the prior for the primary outcome, a smaller value indicates a tighter prior.
+- $\tau^2_{\text{secondary}}$ is the variance of the prior for the secondary outcomes, a larger value indicates a wider prior.
+
+If we use a skeptical (unimodal) prior with mean (mode) at 0 for each, than the wider prior will indicate less skepticism that the value is exactly 0, and a narrow prior will indicate more certainty that is exactly 0.
+
+The posterior distributions for $\mu_{\text{primary}}$ and $\mu_{\text{secondary}}$ are then also multivariate normal, updated by the data:
+
+$$
+\begin{bmatrix}
+\mu_{\text{primary}} \\
+\mu_{\text{secondary}}
+\end{bmatrix}_{\text{posterior}}
+\sim N
+\left(
+\begin{bmatrix}
+\mu_{\text{post}, \text{primary}} \\
+\mu_{\text{post}, \text{secondary}}
+\end{bmatrix},
+\begin{bmatrix}
+\sigma^2_{\text{post}, \text{primary}} & 0 \\
+0 & \sigma^2_{\text{post}, \text{secondary}}
+\end{bmatrix}
+\right)
+$$
+
+The posterior mean ($\mu_{\text{post}}$) and variance ($\sigma^2_{
+
+
+In a Bayesian context, when dealing with normally distributed outcomes, we can use the conjugate prior for the normal distribution, which is also normal. When we have a multivariate normal distribution, we can specify a multivariate normal prior. If you want to put more emphasis on the secondary outcomes and shrink the estimates for the primary outcome, you can use a tighter prior for the primary outcome, implying that you believe the true effect size for the primary outcome is close to zero, and a wider prior for the secondary outcomes, giving them more weight.
+
+The math behind setting up the model with conjugate priors in markdown form is as follows:
+
+
+# Bayesian Model for Primary and Secondary Outcomes
+
+Given the log odds ratios (logOR) for primary and secondary outcomes, we want to construct a Bayesian model that puts less importance on the primary outcome. We assume that the log odds ratios follow a multivariate normal distribution.
+
+## Data
+
+- `logOR_primary`: Log odds ratio for the primary outcome.
+- `logOR_secondary`: Vector of log odds ratios for the secondary outcomes.
+
+## Model
+
+We assume the following distributions:
+
+- Primary outcome prior: `logOR_primary ~ Normal(mu_primary, sigma_primary^2)`.
+- Secondary outcomes prior: `logOR_secondary ~ MultivariateNormal(mu_secondary, Sigma_secondary)`.
+
+Where `mu_primary` is the mean of the primary outcome prior, `sigma_primary` is the standard deviation of the primary outcome prior, `mu_secondary` is the vector of means for the secondary outcomes prior, and `Sigma_secondary` is the covariance matrix for the secondary outcomes prior.
+
+The covariance matrix `Sigma_secondary` accounts for the potential correlation between secondary outcomes, and we can set the diagonal to reflect our certainty about these outcomes (with smaller values indicating more certainty).
+
+We will look at each Secondary outcome separately here for simplicity, so 
+
+`logOR_secondary ~ Normal(mu_secondary, Sigma_secondary)`.
+
+## Likelihood
+
+The likelihood is defined as:
+
+- Primary outcome likelihood: `logOR_primary ~ Normal(sample_logOR_primary, sample_sigma_primary^2)`.
+- Secondary outcomes likelihood: `logOR_secondary ~ Normal(sample_logOR_secondary, sample_sigma_secondary^2)`.
+
+Where `sample_logOR_primary` is the observed log odds ratio for the primary outcome, `sample_sigma_primary` is the observed standard error for the primary outcome log odds ratio, `sample_logOR_secondary` is the vector of observed log odds ratios for the secondary outcomes, and `sample_sigma_secondary` is the observed covariance matrix of the log odds ratios for the secondary outcomes. 
+
+For a given chosen primary and secondary outcome, we also need a `sample_Sigma` covairance matrix for the covariance between the primary and any secondary outcome. 
+
+Intuitively, one may have more negative outcomes if they have a stronger primary response. We cannot calculate this without the original data but here assume a correlation of \rho=0.5. We can adaptc
+
+## Posterior
+
+The posterior distributions can be derived using the conjugate properties of the normal distribution. The posterior mean (`post_mu`) and covariance (`post_Sigma`) are computed as follows:
+
+- Posterior mean: `post_mu = (Sigma^-1 + sample_Sigma^-1)^-1 * (Sigma^-1 * mu + sample_Sigma^-1 * sample_mu)`.
+- Posterior covariance: `post_Sigma = (Sigma^-1 + sample_Sigma^-1)^-1`.
+
+Where `Sigma^-1` is the precision matrix (inverse of the covariance matrix) of the prior, and `sample_Sigma^-1` is the precision matrix of the likelihood.
+
+We can then sample from the posterior distribution to obtain the joint probability distribution of the primary and secondary outcomes.
+
+```{r}
+
+# Event counts for secondary outcomes from the table
+n_treated=7001
+n_placebo=6964
+events_treated <- n_treated * 11.5 / 100  # Number of events in treated group
+events_placebo <- n_placebo * 8.6 / 100  # Number of events in placebo group
+
+
+or_func=function(events_treated,events_placebo,n_treated,n_placebo){
+# Calculate odds for each group
+  nonevents_treated <- n_treated - events_treated  # Number of nonevents in treated group
+
+  nonevents_placebo <- n_placebo - events_placebo  # Number of nonevents in placebo group
+
+odds_treated <- events_treated / nonevents_treated
+odds_placebo <- events_placebo / nonevents_placebo
+
+# Calculate odds ratio
+or_secondary <- odds_treated / odds_placebo
+
+# Calculate log odds ratio
+log_or_secondary <- log(or_secondary)
+
+# Calculate the variance and standard error of logOR
+var_log_or_secondary <- (1 / events_treated) + (1 / nonevents_treated) + 
+                        (1 / events_placebo) + (1 / nonevents_placebo)
+se_log_or_secondary <- sqrt(var_log_or_secondary)
+
+return(list(logor=log_or_secondary,logse=se_log_or_secondary))}
+# Output the standard error of the log odds ratio
+#se_log_or_secondary
+
+```
+
+```{r}
+library(MASS)  # for mvrnorm function
+library(ggplot2)  # for plotting
+
+# Event counts for secondary outcomes from the table
+n_treated <- 7001
+n_placebo <- 6964
+events_treated <- n_treated * 11.5 / 100  # Number of events in treated group
+events_placebo <- n_placebo * 8.6 / 100  # Number of events in placebo group
+
+# Use the function to calculate OR and SE for the secondary outcome
+secondary_outcome <- or_func(events_treated, events_placebo, n_treated, n_placebo)
+log_or_secondary <- secondary_outcome$logor
+se_log_or_secondary <- secondary_outcome$logse
+
+# Define the log odds ratio (logOR) and its standard error for the primary outcome
+log_or_primary <- log(0.87)
+se_log_or_primary <- (log(0.96) - log(0.79)) / (2 * qnorm(0.975))
+
+
+se_primary <- (log(0.96) - log(0.79)) / (2 * qnorm(0.975))
+se_secondary <- c(0.05) # Placeholder standard errors, replace with actual values
+
+library(MASS)  # For mvtnorm
+library(ggplot2)
+library(kernlab)  # For kernel density estimation
+
+# Define prior means and variances
+mu_prior <- c(0, 0)  # Assuming a prior mean of 0 for both outcomes
+var_primary_prior <- (0.5 * se_log_or_primary)^2  # Smaller variance for primary outcome
+var_secondary_prior <- (2 * se_log_or_secondary)^2  # Larger variance for secondary outcome
+
+# Create the prior covariance matrix, incorporating correlation
+rho <- 0.8  # Correlation coefficient
+Sigma_prior <- matrix(c(var_primary_prior, rho * sqrt(var_primary_prior * var_secondary_prior),
+                        rho * sqrt(var_primary_prior * var_secondary_prior), var_secondary_prior),
+                      nrow = 2)
+
+# Create the sample covariance matrix
+Sigma_sample <- matrix(c(se_log_or_primary^2, rho * se_log_or_primary * se_log_or_secondary,
+                         rho * se_log_or_primary * se_log_or_secondary, se_log_or_secondary^2),
+                       nrow = 2)
+
+# Calculate the posterior mean and covariance
+Sigma_post_inv <- solve(Sigma_prior) + solve(Sigma_sample)
+Sigma_post <- solve(Sigma_post_inv)
+mu_post <- Sigma_post %*% (solve(Sigma_prior) %*% mu_prior +
+                           solve(Sigma_sample) %*% c(log_or_primary, log_or_secondary))
+
+# Generate posterior samples
+set.seed(123)
+posterior_samples <- mvrnorm(n = 1000, mu = c(mu_post), Sigma = Sigma_post)
+
+# Kernel density estimation on the posterior samples
+kde_result <- kde2d(posterior_samples[, 1], posterior_samples[, 2], n = 50)
+
+# Convert the result to a data frame for ggplot2
+df <- expand.grid(x = kde_result$x, y = kde_result$y)
+# Scale the density values to range between 0 and 1
+max_density <- max(kde_result$z)
+kde_result$z <- kde_result$z / max_density
+
+df$z <- as.vector(kde_result$z)
+
+
+# Plot the joint probability density
+ggplot(df, aes(x = x, y = y, z = z)) +
+  geom_tile(aes(fill = z)) +  # Filled contour plot
+  scale_fill_viridis_c() +  # Apply a color scale to the fill
+  geom_contour(color = "black") +  # Contour lines in black
+  labs(title = "Joint Probability Density of Primary and Secondary Outcomes",
+       x = "Log Odds Ratio (Primary Outcome)", y = "Log Odds Ratio (Secondary Outcome)") +
+  theme_minimal()
+```
+
+
+
+Now we might liek to see what is the odds of not having a clinically meaningful primary outcome and having a true logOR of the secondary outcome greater than 0.  In our model, we are assuming a correlation between the primary and secondary outcomes, specified by \rho = 0.4.This correlation is factored into the covariance matrix of the bivariate normal distribution from which we sample the posterior distributions of the primary and secondary outcomes.
+
+To clarify, while we are assuming a correlation and using this to generate posterior samples, the actual "joint probability mass function" typically refers to a different concept, often used in the context of discrete variables. In our case, we are dealing with continuous variables (log odds ratios) and their joint probability distribution.
+
+To illustrate the joint probability of specific scenarios (like a non-clinically significant primary outcome and a likely secondary outcome), we subset the posterior samples based on our criteria and then visualize the density of these samples. This approach gives us an idea of how frequently these specific conditions co-occur under our model assumptions.
+
+Let's modify the code slightly to reflect this distinction and to emphasize that we are visualizing the density of these scenarios, not calculating a discrete joint probability mass function:
+
+```{r}
+library(MASS)  # For mvtnorm
+library(ggplot2)
+library(kernlab)  # For kernel density estimation
+
+# [Prior calculations and posterior sample generation code should be here]
+
+# Define the threshold for non-clinically significant primary outcome
+threshold_primary <- log(0.95)  # Example threshold, adjust as needed
+
+# Filter samples: primary outcome is non-clinically significant and secondary outcome is likely
+filtered_samples <- posterior_samples[posterior_samples[, 1] > threshold_primary & posterior_samples[, 2] > 0, ]
+
+# Kernel density estimation on the filtered samples
+kde_result <- kde2d(filtered_samples[, 1], filtered_samples[, 2], n = 50)
+
+# Scale the density values
+max_density <- max(kde_result$z)
+kde_result$z <- kde_result$z / max_density
+
+# Convert the result to a data frame for ggplot2
+df <- expand.grid(x = kde_result$x, y = kde_result$y)
+df$z <- as.vector(kde_result$z)
+
+# Plot the joint probability density for the filtered criteria
+ggplot(df, aes(x = x, y = y, fill = z)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  geom_contour(aes(z = z), color = "black") +
+  labs(title = "Probability Density of Non-Clinically Significant Primary and Likely Secondary Outcome",
+       x = "Log Odds Ratio (Primary Outcome)", y = "Log Odds Ratio (Secondary Outcome)") +
+  theme_minimal()
+```
+
+In fact, with this prior, the probability that the primary outcome is not clinically significant and an adverse event is encounter is:
+
+`r mean(posterior_samples[,1]>0&posterior_samples[,2]>0)`.
+
+
