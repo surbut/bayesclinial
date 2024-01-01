@@ -241,7 +241,6 @@ The posterior mean ($\mu_{\text{post}}$) and variance ($\sigma^2_{
 
 In a Bayesian context, when dealing with normally distributed outcomes, we can use the conjugate prior for the normal distribution, which is also normal. When we have a multivariate normal distribution, we can specify a multivariate normal prior. If you want to put more emphasis on the secondary outcomes and shrink the estimates for the primary outcome, you can use a tighter prior for the primary outcome, implying that you believe the true effect size for the primary outcome is close to zero, and a wider prior for the secondary outcomes, giving them more weight.
 
-The math behind setting up the model with conjugate priors in markdown form is as follows:
 
 
 # Bayesian Model for Primary and Secondary Outcomes
@@ -264,9 +263,9 @@ Where `mu_primary` is the mean of the primary outcome prior, `sigma_primary` is 
 
 The covariance matrix `Sigma_secondary` accounts for the potential correlation between secondary outcomes, and we can set the diagonal to reflect our certainty about these outcomes (with smaller values indicating more certainty).
 
-We will look at each Secondary outcome separately here for simplicity, so 
+We will look one Secondary outcome separately here for simplicity, and invite users to consider each separately using the code above. Let's consider $Renal Impairment$, in which the incidence was 11.5 vs 8.6 %, treated vs placebo arm.
 
-`logOR_secondary ~ Normal(mu_secondary, Sigma_secondary)`.
+`logOR_secondary ~ Normal(mu_secondary, Sigma_secondary)`. Let's first consider the secondary outcome of 
 
 ## Likelihood
 
@@ -279,7 +278,11 @@ Where `sample_logOR_primary` is the observed log odds ratio for the primary outc
 
 For a given chosen primary and secondary outcome, we also need a `sample_Sigma` covairance matrix for the covariance between the primary and any secondary outcome. 
 
-Intuitively, one may have more negative outcomes if they have a stronger primary response. We cannot calculate this without the original data but here assume a correlation of \rho=0.5. We can adaptc
+## Choice of prior
+
+Intuitively, one may have more negative outcomes if they have a stronger primary response. We cannot calculate this without the original data but here assume a correlation of \rho=0.5. 
+
+Here we will use a prior variance that *upweights* adverse secondary outcomes (i.e., 2 * se log OR) and downweights ('shrinks') primary outcomes (0.5 * se log OR). This is a reasonable choice if we seek to minimize negative effects and suspect modest improvements from this medication.
 
 ## Posterior
 
@@ -326,6 +329,7 @@ return(list(logor=log_or_secondary,logse=se_log_or_secondary))}
 #se_log_or_secondary
 
 ```
+
 
 ```{r}
 
@@ -400,7 +404,7 @@ ggplot(df, aes(x = x, y = y, z = z)) +
 
 
 
-Now we might liek to see what is the odds of not having a clinically meaningful primary outcome and having a true logOR of the secondary outcome greater than 0.  In our model, we are assuming a correlation between the primary and secondary outcomes, specified by \rho = 0.4.This correlation is factored into the covariance matrix of the bivariate normal distribution from which we sample the posterior distributions of the primary and secondary outcomes.
+Now we might likw to see what is the odds of not having a clinically meaningful primary outcome and having a true logOR of the secondary outcome greater than 0.  In our model, we are assuming a correlation between the primary and secondary outcomes, specified by \rho = 0.5.This correlation is factored into the covariance matrix of the bivariate normal distribution from which we sample the posterior distributions of the primary and secondary outcomes.
 
 To clarify, while we are assuming a correlation and using this to generate posterior samples, the actual "joint probability mass function" typically refers to a different concept, often used in the context of discrete variables. In our case, we are dealing with continuous variables (log odds ratios) and their joint probability distribution.
 
