@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+<meta name="date" content="2023-12-30" />
+
+<title>Clear Outcomes Trial</title>
+
+<script src="site_libs/header-attrs-2.25/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">bayesclinial</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Clear Outcomes Trial</h1>
+<h4 class="date">2023-12-30</h4>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2024-01-01
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 6
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 1
+</p>
+<p>
+<strong>Knit directory:</strong> <code>bayesclinical/</code> <span
+class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.1). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguncommittedchanges">
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> uncommitted
+changes </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguncommittedchanges"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
+<code>wflow_publish</code> to commit the R Markdown file and build the
+HTML.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20240101code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20240101)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20240101code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20240101)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree0c598eb4f545806d2ee8c2811f9f9d7d03f601b7targetblank0c598eba">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/surbut/bayesclinical/tree/0c598eb4f545806d2ee8c2811f9f9d7d03f601b7" target="_blank">0c598eb</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree0c598eb4f545806d2ee8c2811f9f9d7d03f601b7targetblank0c598eba"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/surbut/bayesclinical/tree/0c598eb4f545806d2ee8c2811f9f9d7d03f601b7" target="_blank">0c598eb</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Unstaged changes:
+    Modified:   analysis/clear.Rmd
+    Modified:   analysis/index.Rmd
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/clear.Rmd</code>) and HTML
+(<code>docs/clear.html</code>) files. If you’ve configured a remote Git
+repository (see <code>?wflow_git_remote</code>), click on the hyperlinks
+in the table below to view the files as they were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/surbut/bayesclinical/blob/4bd3a2acd78681bc36f9205aeb02894e944f1e9b/analysis/clear.Rmd" target="_blank">4bd3a2a</a>
+</td>
+<td>
+Sarah Urbut
+</td>
+<td>
+2024-01-01
+</td>
+<td>
+Update
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/surbut/bayesclinical/blob/3035caa7b9dfe77dc908ee9d3fa3a59c8b5dcf7e/analysis/clear.Rmd" target="_blank">3035caa</a>
+</td>
+<td>
+Sarah Urbut
+</td>
+<td>
+2024-01-01
+</td>
+<td>
+update
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="bayesian-model-with-conjugate-multivariate-normal-priors"
+class="section level3">
+<h3>Bayesian Model with Conjugate Multivariate Normal Priors</h3>
+<p>In the CLEAR outcome trial, the aim was to find a clinically
+meaninful difference on MACE using Bempedoic Acid in statin-intolerance
+patients.</p>
+<p>Let’s first compare the primary outcomes (found significant) using a
+unimodal Normal shrinkage prior. We take advantage that the logOR is
+approximately normally distributed, and that the normal distribution has
+a conjugate (normal) prior. This means that the Posterior and Prior take
+the same form, and in the case of the normal distribtuion, so does the
+likelihood!</p>
+</div>
+<div id="univariate-primary-outcomes" class="section level1">
+<h1>Univariate primary outcomes</h1>
+<p>First let’s plot the primary outcomes under a flat (N(0,1e6)) prior
+which approaches the frequentist analysis, and two skeptical (small ^2)
+prior.</p>
+We can see that under the flat prior analysis, the credible interval
+should approach the confidence interval
+<p>With increasinly skeptical priors, we become less confident that the
+effect is truly non 0</p>
+<p>We use the empircal bayes normal mean here, namely that all
+distributions center around a mean of 0, and allow the confidence in the
+error (the ‘spike or slab’) to determine the amount of skepticism
+(shrinkage).</p>
+<div id="summary-primary-outcomes" class="section level2">
+<h2>Summary primary outcomes</h2>
+<p>For the flat prior, we see the results are identical to table 1:</p>
+<pre><code>                          mu1     sigma1 p(logOR&lt;0|data)
+Primary Outcome 1 -0.14383088 0.04972039       0.9980908
+Primary Outcome 2 -0.15842791 0.05959672       0.9960736
+Primary Outcome 3 -0.25963011 0.08194150       0.9992338
+Primary Outcome 4 -0.21225050 0.06253239       0.9996559
+Primary Outcome 5 -0.16273081 0.11942470       0.9134993
+Primary Outcome 6  0.04533776 0.08748751       0.3021525
+Primary Outcome 7  0.03278982 0.06910202       0.3175670</code></pre>
+<p>For the skeptical prior 1, where we are twice as confident in the
+prior (with mass at exactly 0) then the data, we see a mean closer to no
+difference (logOR of 0)</p>
+<pre><code>                           mu1     sigma1 p(logOR&lt;0|data)
+Primary Outcome 1 -0.028766175 0.02223563       0.9021150
+Primary Outcome 2 -0.031685582 0.02665246       0.8827492
+Primary Outcome 3 -0.051926023 0.03664535       0.9217568
+Primary Outcome 4 -0.042450100 0.02796533       0.9354870
+Primary Outcome 5 -0.032546162 0.05340835       0.7288648
+Primary Outcome 6  0.009067553 0.03912561       0.4083642
+Primary Outcome 7  0.006557965 0.03090336       0.4159721</code></pre>
+<p>For the skeptical prior 2, where we are ten time as confident in the
+prior (with mass at exactly 0) then the data, we see a mean almost at
+exactly no difference (logOR of 0)</p>
+<pre><code>                            mu1      sigma1 p(logOR&lt;0|data)
+Primary Outcome 1 -0.0014240681 0.004947364       0.6132669
+Primary Outcome 2 -0.0015685932 0.005930095       0.6043081
+Primary Outcome 3 -0.0025705952 0.008153484       0.6237238
+Primary Outcome 4 -0.0021014901 0.006222205       0.6322206
+Primary Outcome 5 -0.0016111961 0.011883202       0.5539257
+Primary Outcome 6  0.0004488888 0.008705333       0.4794377
+Primary Outcome 7  0.0003246517 0.006875908       0.4811706</code></pre>
+<p><img src="figure/clear.Rmd/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="secondary-outcomes" class="section level2">
+<h2>Secondary outcomes</h2>
+<p>We assume the likelihood for the log odds ratios (logOR) of primary
+and secondary outcomes to be normally distributed:</p>
+<p><span class="math display">\[
+\text{logOR}_{\text{primary}} \sim N(\mu_{\text{primary}},
+\sigma^2_{\text{primary}})
+\]</span></p>
+<p><span class="math display">\[
+\text{logOR}_{\text{secondary}} \sim N(\mu_{\text{secondary}},
+\sigma^2_{\text{secondary}})
+\]</span></p>
+<p>Where: - <span class="math inline">\(\mu\)</span> represents the mean
+logOR for the primary and secondary outcomes. - <span
+class="math inline">\(\sigma^2\)</span> represents the variance of the
+logOR for the primary and secondary outcomes.</p>
+<p>We specify conjugate multivariate normal priors for <span
+class="math inline">\(\mu_{\text{primary}}\)</span> and <span
+class="math inline">\(\mu_{\text{secondary}}\)</span>:</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+\mu_{\text{primary}} \\
+\mu_{\text{secondary}}
+\end{bmatrix}
+\sim N
+\left(
+\begin{bmatrix}
+0 \\
+0
+\end{bmatrix},
+\begin{bmatrix}
+\tau^2_{\text{primary}} &amp; 0 \\
+0 &amp; \tau^2_{\text{secondary}}
+\end{bmatrix}
+\right)
+\]</span></p>
+<p>Where: - <span class="math inline">\(\tau^2_{\text{primary}}\)</span>
+is the variance of the prior for the primary outcome, a smaller value
+indicates a tighter prior. - <span
+class="math inline">\(\tau^2_{\text{secondary}}\)</span> is the variance
+of the prior for the secondary outcomes, a larger value indicates a
+wider prior.</p>
+<p>If we use a skeptical (unimodal) prior with mean (mode) at 0 for
+each, than the wider prior will indicate less skepticism that the value
+is exactly 0, and a narrow prior will indicate more certainty that is
+exactly 0.</p>
+<p>The posterior distributions for <span
+class="math inline">\(\mu_{\text{primary}}\)</span> and <span
+class="math inline">\(\mu_{\text{secondary}}\)</span> are then also
+multivariate normal, updated by the data:</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+\mu_{\text{primary}} \\
+\mu_{\text{secondary}}
+\end{bmatrix}_{\text{posterior}}
+\sim N
+\left(
+\begin{bmatrix}
+\mu_{\text{post}, \text{primary}} \\
+\mu_{\text{post}, \text{secondary}}
+\end{bmatrix},
+\begin{bmatrix}
+\sigma^2_{\text{post}, \text{primary}} &amp; 0 \\
+0 &amp; \sigma^2_{\text{post}, \text{secondary}}
+\end{bmatrix}
+\right)
+\]</span></p>
+<p>The posterior mean (<span
+class="math inline">\(\mu_{\text{post}}\)</span>) and variance
+($^2_{</p>
+<p>In a Bayesian context, when dealing with normally distributed
+outcomes, we can use the conjugate prior for the normal distribution,
+which is also normal. When we have a multivariate normal distribution,
+we can specify a multivariate normal prior. If you want to put more
+emphasis on the secondary outcomes and shrink the estimates for the
+primary outcome, you can use a tighter prior for the primary outcome,
+implying that you believe the true effect size for the primary outcome
+is close to zero, and a wider prior for the secondary outcomes, giving
+them more weight.</p>
+</div>
+</div>
+<div id="bayesian-model-for-primary-and-secondary-outcomes"
+class="section level1">
+<h1>Bayesian Model for Primary and Secondary Outcomes</h1>
+<p>Given the log odds ratios (logOR) for primary and secondary outcomes,
+we want to construct a Bayesian model that puts less importance on the
+primary outcome. We assume that the log odds ratios follow a
+multivariate normal distribution.</p>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<ul>
+<li><code>logOR_primary</code>: Log odds ratio for the primary
+outcome.</li>
+<li><code>logOR_secondary</code>: Vector of log odds ratios for the
+secondary outcomes.</li>
+</ul>
+</div>
+<div id="model" class="section level2">
+<h2>Model</h2>
+<p>We assume the following distributions:</p>
+<ul>
+<li>Primary outcome prior:
+<code>logOR_primary ~ Normal(mu_primary, sigma_primary^2)</code>.</li>
+<li>Secondary outcomes prior:
+<code>logOR_secondary ~ MultivariateNormal(mu_secondary, Sigma_secondary)</code>.</li>
+</ul>
+<p>Where <code>mu_primary</code> is the mean of the primary outcome
+prior, <code>sigma_primary</code> is the standard deviation of the
+primary outcome prior, <code>mu_secondary</code> is the vector of means
+for the secondary outcomes prior, and <code>Sigma_secondary</code> is
+the covariance matrix for the secondary outcomes prior.</p>
+<p>The covariance matrix <code>Sigma_secondary</code> accounts for the
+potential correlation between secondary outcomes, and we can set the
+diagonal to reflect our certainty about these outcomes (with smaller
+values indicating more certainty).</p>
+<p>We will look one Secondary outcome separately here for simplicity,
+and invite users to consider each separately using the code above. Let’s
+consider <span class="math inline">\(Renal Impairment\)</span>, in which
+the incidence was 11.5 vs 8.6 %, treated vs placebo arm.</p>
+<p><code>logOR_secondary ~ Normal(mu_secondary, Sigma_secondary)</code>.
+Let’s first consider the secondary outcome of</p>
+</div>
+<div id="likelihood" class="section level2">
+<h2>Likelihood</h2>
+<p>The likelihood is defined as:</p>
+<ul>
+<li>Primary outcome likelihood:
+<code>logOR_primary ~ Normal(sample_logOR_primary, sample_sigma_primary^2)</code>.</li>
+<li>Secondary outcomes likelihood:
+<code>logOR_secondary ~ Normal(sample_logOR_secondary, sample_sigma_secondary^2)</code>.</li>
+</ul>
+<p>Where <code>sample_logOR_primary</code> is the observed log odds
+ratio for the primary outcome, <code>sample_sigma_primary</code> is the
+observed standard error for the primary outcome log odds ratio,
+<code>sample_logOR_secondary</code> is the vector of observed log odds
+ratios for the secondary outcomes, and
+<code>sample_sigma_secondary</code> is the observed covariance matrix of
+the log odds ratios for the secondary outcomes.</p>
+<p>For a given chosen primary and secondary outcome, we also need a
+<code>sample_Sigma</code> covairance matrix for the covariance between
+the primary and any secondary outcome.</p>
+</div>
+<div id="choice-of-prior" class="section level2">
+<h2>Choice of prior</h2>
+<p>Intuitively, one may have more negative outcomes if they have a
+stronger primary response. We cannot calculate this without the original
+data but here assume a correlation of .</p>
+<p>Here we will use a prior variance that <em>upweights</em> adverse
+secondary outcomes (i.e., 2 * se log OR) and downweights (‘shrinks’)
+primary outcomes (0.5 * se log OR). This is a reasonable choice if we
+seek to minimize negative effects and suspect modest improvements from
+this medication.</p>
+</div>
+<div id="posterior" class="section level2">
+<h2>Posterior</h2>
+<p>The posterior distributions can be derived using the conjugate
+properties of the normal distribution. The posterior mean
+(<code>post_mu</code>) and covariance (<code>post_Sigma</code>) are
+computed as follows:</p>
+<ul>
+<li>Posterior mean:
+<code>post_mu = (Sigma^-1 + sample_Sigma^-1)^-1 * (Sigma^-1 * mu + sample_Sigma^-1 * sample_mu)</code>.</li>
+<li>Posterior covariance:
+<code>post_Sigma = (Sigma^-1 + sample_Sigma^-1)^-1</code>.</li>
+</ul>
+<p>Where <code>Sigma^-1</code> is the precision matrix (inverse of the
+covariance matrix) of the prior, and <code>sample_Sigma^-1</code> is the
+precision matrix of the likelihood.</p>
+<p>We can then sample from the posterior distribution to obtain the
+joint probability distribution of the primary and secondary
+outcomes.</p>
+<p><img src="figure/clear.Rmd/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Now we might likw to see what is the odds of not having a clinically
+meaningful primary outcome and having a true logOR of the secondary
+outcome greater than 0. In our model, we are assuming a correlation
+between the primary and secondary outcomes, specified by = 0.5.This
+correlation is factored into the covariance matrix of the bivariate
+normal distribution from which we sample the posterior distributions of
+the primary and secondary outcomes.</p>
+<p>To clarify, while we are assuming a correlation and using this to
+generate posterior samples, the actual “joint probability mass function”
+typically refers to a different concept, often used in the context of
+discrete variables. In our case, we are dealing with continuous
+variables (log odds ratios) and their joint probability
+distribution.</p>
+<p>To illustrate the joint probability of specific scenarios (like a
+non-clinically significant primary outcome and a likely secondary
+outcome), we subset the posterior samples based on our criteria and then
+visualize the density of these samples. This approach gives us an idea
+of how frequently these specific conditions co-occur under our model
+assumptions.</p>
+<p>Let’s modify the code slightly to reflect this distinction and to
+emphasize that we are visualizing the density of these scenarios, not
+calculating a discrete joint probability mass function:</p>
+<p><img src="figure/clear.Rmd/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>In fact, with this prior, the probability that the primary outcome is
+not clinically significant and an adverse event is encounter is:</p>
+<p>0.997.</p>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre><code>R version 4.3.1 (2023-06-16)
+Platform: aarch64-apple-darwin20 (64-bit)
+Running under: macOS Sonoma 14.2.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] kernlab_0.9-32      ggpubr_0.6.0        gridExtra_2.3      
+ [4] reshape2_1.4.4      MASS_7.3-60         ggplot2_3.4.4      
+ [7] reshape_0.8.9       metafor_4.4-0       numDeriv_2016.8-1.1
+[10] metadat_1.2-0       Matrix_1.6-4       
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.4      xfun_0.41         bslib_0.6.0       rstatix_0.7.2    
+ [5] lattice_0.22-5    mathjaxr_1.6-0    vctrs_0.6.4       tools_4.3.1      
+ [9] generics_0.1.3    tibble_3.2.1      fansi_1.0.5       highr_0.10       
+[13] pkgconfig_2.0.3   lifecycle_1.0.4   farver_2.1.1      compiler_4.3.1   
+[17] stringr_1.5.1     git2r_0.32.0      munsell_0.5.0     carData_3.0-5    
+[21] httpuv_1.6.12     htmltools_0.5.7   sass_0.4.7        yaml_2.3.7       
+[25] later_1.3.1       pillar_1.9.0      car_3.1-2         jquerylib_0.1.4  
+[29] whisker_0.4.1     tidyr_1.3.0       cachem_1.0.8      abind_1.4-5      
+[33] nlme_3.1-163      tidyselect_1.2.0  digest_0.6.33     stringi_1.8.2    
+[37] dplyr_1.1.4       purrr_1.0.2       labeling_0.4.3    cowplot_1.1.1    
+[41] rprojroot_2.0.4   fastmap_1.1.1     grid_4.3.1        colorspace_2.1-0 
+[45] cli_3.6.1         magrittr_2.0.3    utf8_1.2.4        broom_1.0.5      
+[49] withr_2.5.2       scales_1.2.1      promises_1.2.1    backports_1.4.1  
+[53] rmarkdown_2.25    ggsignif_0.6.4    workflowr_1.7.1   evaluate_0.23    
+[57] knitr_1.45        viridisLite_0.4.2 rlang_1.1.2       isoband_0.2.7    
+[61] Rcpp_1.0.11       glue_1.6.2        rstudioapi_0.15.0 jsonlite_1.8.7   
+[65] R6_2.5.1          plyr_1.8.9        fs_1.6.3         </code></pre>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
