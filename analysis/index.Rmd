@@ -10,6 +10,6 @@ editor_options:
 
 Welcome to my research website.
 
-[Here](docs/clear.html) is the Bayesian reanalysis of the [CLEAR](https://www.nejm.org/doi/full/10.1056/NEJMoa2215024) outcomes trial under a flat or skeptical prior, considering also the co-occurrence of secondary outcomes.
+[Here](clear.html) is the Bayesian reanalysis of the [CLEAR](https://www.nejm.org/doi/full/10.1056/NEJMoa2215024) outcomes trial under a flat or skeptical prior, considering also the co-occurrence of secondary outcomes.
 
-[Here](docs/orbita.html) is the Bayesian reanalysis of the [ORBITA-2](https://www.nejm.org/doi/full/10.1056/NEJMoa2310610) outcomes trial under a flat or skeptical prior, using a historical prior from the 2018 results.
+[Here](orbita.html) is the Bayesian reanalysis of the [ORBITA-2](https://www.nejm.org/doi/full/10.1056/NEJMoa2310610) outcomes trial under a flat or skeptical prior, using a historical prior from the 2018 results.
