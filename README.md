@@ -1,5 +1,7 @@
-# bayesclinial
+# bayesclinical
 
-A [workflowr][] project.
+Welcome to my re-analysis of Bayes clinical trials!
 
-[workflowr]: https://github.com/workflowr/workflowr
+Here, you will find the code to reproduce the analyses.
+
+(Here)[http://surbut.github.io/bayesclinical/index.html] you can find the pretty plots and description in a user friendly image!
