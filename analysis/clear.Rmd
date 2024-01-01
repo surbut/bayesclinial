@@ -5,10 +5,17 @@ date: "2023-12-30"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE,warning = FALSE,message = FALSE)
 ```
 
 ### Bayesian Model with Conjugate Multivariate Normal Priors
+
+In the CLEAR outcome trial, the aim was to find a clinically meaninful difference on MACE using Bempedoic Acid in statin-intolerance patients. 
+
+Let's first compare the primary outcomes (found significant) using a unimodal Normal shrinkage prior. We take advantage that the logOR is approximately normally distributed, and that the normal distribution has a conjugate (normal) prior. This means that the Posterior and Prior take the same form, and in the case of the normal distribtuion, so does the likelihood!
+
+# Univariate primary outcomes
+
 
 First let's plot the primary outcomes under a flat (N(0,1e6)) prior which approaches the frequentist analysis, and two skeptical (small \sigma^2) prior.
 
@@ -17,14 +24,20 @@ First let's plot the primary outcomes under a flat (N(0,1e6)) prior which approa
 
 We use the empircal bayes normal mean here, namely that all distributions center around a mean of 0, and allow the confidence in the error (the 'spike or slab') to determine the amount of skepticism (shrinkage).
 
-```{r cars}
+```{r echo=FALSE}
 # Install necessary packages if not already installed
 if (!require("metafor")) install.packages("metafor")
 library(metafor)
 library(reshape)
 library(ggplot2)
 library(MASS)
-library(gridExtra)
+library(ggplot2)
+library(reshape2)  # For melting data frames
+library(gridExtra)  # 
+library(ggpubr)
+library(kernlab)
+
+
 # Your data from the table (replace with your actual values)
 events_treatment <- c(819, 575, 261, 435, 135, 269, 434)
 events_placebo <- c(927, 663, 334, 529, 158, 257, 420)
@@ -87,21 +100,26 @@ post_skeptical_2 <- matrix(unlist( mapply(calc_posterior, log_or, se_log_or, pri
 
 For the flat prior, we see the results are identical to table 1:
 
-`r post_flat`.
+
+```{r}
+post_flat
+```
+
 
 For the skeptical prior 1, where we are twice as confident in the prior (with mass at exactly 0) then the data, we see a mean closer to no difference (logOR of 0)
 
-`r post_skeptical_1`.
-
+```{r}
+post_skeptical_1
+```
 For the skeptical prior 2, where we are ten time as confident in the prior (with mass at exactly 0) then the data, we see a mean almost at exactly no difference (logOR of 0)
 
-`r post_skeptical_2`
+```{r}
+post_skeptical_2
 
-```{r pressure, echo=FALSE}
+```
+
+```{r,echo=FALSE}
 # Function to calculate the posterior and plot the distributions
-library(ggplot2)
-library(reshape2)  # For melting data frames
-library(gridExtra)  # For arranging plots
 
 plot_distributions <- function(log_or, se, prior, endpoint_name) {
   # Create a sequence of x values for plotting the distributions
@@ -149,7 +167,7 @@ plot_primary <- plot_distributions(log_or = log_or[1],se = se_log_or[1], flat_pr
 plot_secondary1 <- plot_distributions(log_or = log_or[1],se = se_log_or[1], prior = skeptical_prior_1, "Skeptical 1")
 plot_secondary2 <- plot_distributions(log_or = log_or[1],se = se_log_or[1],prior=skeptical_prior_2, "Skeptical 2")
 
-library(ggpubr)
+
 # Arrange the plots in a single row
 ggpubr::ggarrange(plot_primary, plot_secondary1, plot_secondary2, nrow = 1,common.legend=TRUE)
 
@@ -310,8 +328,6 @@ return(list(logor=log_or_secondary,logse=se_log_or_secondary))}
 ```
 
 ```{r}
-library(MASS)  # for mvrnorm function
-library(ggplot2)  # for plotting
 
 # Event counts for secondary outcomes from the table
 n_treated <- 7001
@@ -332,9 +348,7 @@ se_log_or_primary <- (log(0.96) - log(0.79)) / (2 * qnorm(0.975))
 se_primary <- (log(0.96) - log(0.79)) / (2 * qnorm(0.975))
 se_secondary <- c(0.05) # Placeholder standard errors, replace with actual values
 
-library(MASS)  # For mvtnorm
-library(ggplot2)
-library(kernlab)  # For kernel density estimation
+ # For kernel density estimation
 
 # Define prior means and variances
 mu_prior <- c(0, 0)  # Assuming a prior mean of 0 for both outcomes
@@ -395,9 +409,6 @@ To illustrate the joint probability of specific scenarios (like a non-clinically
 Let's modify the code slightly to reflect this distinction and to emphasize that we are visualizing the density of these scenarios, not calculating a discrete joint probability mass function:
 
 ```{r}
-library(MASS)  # For mvtnorm
-library(ggplot2)
-library(kernlab)  # For kernel density estimation
 
 # [Prior calculations and posterior sample generation code should be here]
 
