@@ -118,6 +118,68 @@ post_skeptical_2
 
 ```
 
+
+## Under MCMC
+
+We can also use a MCMC distribution:
+
+Here, we use a cauchy prior for \tau, the sd of the prior, and then choose
+
+\tau ~ cauchy(0, 2.5); 
+\theta ~ normal(0, \tau); // Priors for theta
+logOR ~ normal(\theta, SE); // Likelihood
+
+```{r rstan}
+library(rstan)
+# Define the Stan model
+stan_model_code <- "
+data {
+int<lower=0> N;       // Number of observations
+vector[N] logOR;      // Log odds ratios
+vector<lower=0>[N] SE; // Standard errors
+}
+parameters {
+vector[N] theta;      // Parameters (log odds ratios) to estimate
+real<lower=0> tau;    // Standard deviation of the priors
+}
+model {
+tau ~ cauchy(0, 2.5); // Prior for tau
+theta ~ normal(0, tau); // Priors for theta
+logOR ~ normal(theta, SE); // Likelihood
+}
+"
+# Prepare data for Stan
+stan_data <- list(N = length(log_or), logOR = log_or, SE = se_log_or)
+# Run MCMC simulation
+fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains = 4)
+# Extract the results
+posterior_samples <- extract(fit)
+# Analyze the results (e.g., summary, plots)
+# print(summary(fit))
+
+
+library(ggplot2)
+
+# Assuming posterior_samples is a list returned by an MCMC simulation like rstan
+# and it contains a matrix named 'theta', where each column corresponds to a different chain
+
+# Combine samples from all chains for the first primary outcome
+combined_samples_theta1 <- posterior_samples$theta[, 1]
+combined_samples_theta2 <- posterior_samples$theta[, 2]
+
+# Plot histogram using ggplot2
+ggplot(data.frame(Theta = combined_samples_theta1), aes(x = Theta)) +
+  geom_histogram(bins = 30, fill = "blue", color = "black") +
+  labs(title = "Posterior Distribution of Theta (Primary Outcome 1)", x = "Theta", y = "Frequency") +
+  theme_minimal()
+
+ggplot(data.frame(Theta = combined_samples_theta2), aes(x = Theta)) +
+  geom_histogram(bins = 30, fill = "red", color = "black") +
+  labs(title = "Posterior Distribution of Theta (Primary Outcome 1)", x = "Theta", y = "Frequency") +
+  theme_minimal()
+
+```
+
 ```{r,echo=FALSE}
 # Function to calculate the posterior and plot the distributions
 
