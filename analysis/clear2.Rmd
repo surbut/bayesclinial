@@ -1,0 +1,276 @@
+---
+title: "Clear Outcomes Trial"
+output: html_document
+date: "2023-12-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE)
+
+# Set global options to suppress Stan verbose output
+options(stan.verbose = FALSE)
+
+# Function to silently load libraries without showing messages in the knitted output
+quietly_load_library <- function(library_name) {
+  suppressPackageStartupMessages(library(library_name, character.only = TRUE))
+}
+
+# Use the function to load required libraries
+quietly_load_library("brms")
+quietly_load_library("tidybayes")
+quietly_load_library("rstan")
+quietly_load_library("dplyr")
+quietly_load_library("ggplot2")
+quietly_load_library("ggridges")
+quietly_load_library("ggpubr")
+quietly_load_library("ggthemes")
+#quietly_load_library("bpp")
+quietly_load_library("foreach")
+```
+
+### Bayesian Model with Conjugate Multivariate Normal Priors
+
+In the CLEAR outcome trial, the aim was to find a clinically meaninful difference on MACE using Bempedoic Acid in statin-intolerance patients. 
+
+Let's first compare the primary outcomes (found significant) using a unimodal Normal shrinkage prior. We take advantage that the logOR is approximately normally distributed, and that the normal distribution has a conjugate (normal) prior. This means that the Posterior and Prior take the same form, and in the case of the normal distribtuion, so does the likelihood!
+
+# Univariate primary outcomes
+
+
+1. Skeptical Prior
+
+Definition: A skeptical prior is centered at 0, with the standard deviation calculated such that only 10% of the probability mass is to the left of the Minimal Clinically Important Difference (MCID).
+
+Let MCID be the minimal clinically important difference converted to its log odds ratio equivalent, log_mcid.
+To find the standard deviation (sigma_skeptical), determine the z-score that leaves 90% of the distribution to the right of log_mcid. This z-score corresponds to the 10th percentile of the standard normal distribution.
+
+
+```{r}
+# Given data from the table
+n_treatment <- 6992
+events_treatment <- 819
+n_control <- 6978
+events_control <- 927
+
+# Calculate the odds ratio (OR)
+or <- (events_treatment / (n_treatment - events_treatment)) / (events_control / (n_control - events_control))
+
+# Convert OR to logOR
+log_or <- log(or)
+
+# Calculate the standard error of the logOR
+se_log_or <- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)) + (1 / events_control) + (1 / (n_control - events_control)))
+
+# Define the MCID as an absolute risk reduction of 1.3%
+mcid_arr <- 0.013
+# Convert the absolute risk reduction to logOR for MCID
+# Assuming a baseline risk from the control group
+baseline_risk <- events_control / n_control
+mcid_or <- (baseline_risk - mcid_arr) / (baseline_risk * (1 - mcid_arr))
+log_mcid <- log(mcid_or)
+```
+
+
+Here we show that these infact produce desired priors:
+
+```{r}
+
+z_skeptical <- qnorm(0.10)
+sigma_skeptical <- abs(log_mcid / z_skeptical)
+pnorm(log_mcid,sd=sigma_skeptical)
+```
+
+
+2. Enthusiastic Prior
+Definition: An enthusiastic prior is centered at MCID, with the standard deviation calculated such that there is a 30% probability of harm (logOR > 0).
+
+
+
+For the enthusiastic prior, we want 70% of the distribution to be below 0 when the mean is at log_mcid.
+To find the standard deviation (sigma_enthusiastic), calculate the z-score that corresponds to the 70th percentile of the standard normal distribution.
+
+```{r}
+z_enthusiastic <- qnorm(0.70)
+sigma_enthusiastic <- abs((0 - log_mcid) / z_enthusiastic)
+pnorm(0,mean=log_mcid,sd = sigma_enthusiastic)
+```
+
+
+3. Pessimistic Prior
+Definition: A pessimistic prior is centered at -MCID, with the standard deviation calculated such that there is a 30% probability of benefit (logOR < 0).
+
+Calculation:
+
+For the pessimistic prior, we want 70% of the distribution to be above 0 when the mean is at -log_mcid.
+To find the standard deviation (sigma_pessimistic), calculate the z-score that corresponds to the 30th percentile of the standard normal distribution.
+```{r}
+z_pessimistic <- qnorm(0.30)
+sigma_pessimistic <- abs((0 + log_mcid) / z_pessimistic)
+
+pnorm(0,mean=-log_mcid,sd = sigma_pessimistic)
+```
+
+
+```{r echo=FALSE}
+# Install necessary packages if not already installed
+if (!require("metafor")) install.packages("metafor")
+library(rstan)
+library(metafor)
+library(reshape)
+library(ggplot2)
+library(MASS)
+library(ggplot2)
+library(reshape2)  # For melting data frames
+library(gridExtra)  # 
+library(ggpubr)
+library(kernlab)
+
+# Load necessary library
+library(tidyverse)
+
+# Given data from the table
+n_treatment <- 6992
+events_treatment <- 819
+n_control <- 6978
+events_control <- 927
+
+# Calculate the odds ratio (OR)
+or <- (events_treatment / (n_treatment - events_treatment)) / (events_control / (n_control - events_control))
+
+# Convert OR to logOR
+log_or <- log(or)
+
+# Calculate the standard error of the logOR
+se_log_or <- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)) + (1 / events_control) + (1 / (n_control - events_control)))
+
+# Define the MCID as an absolute risk reduction of 1.3%
+mcid_arr <- 0.013
+# Convert the absolute risk reduction to logOR for MCID
+# Assuming a baseline risk from the control group
+baseline_risk <- events_control / n_control
+mcid_or <- (baseline_risk - mcid_arr) / (baseline_risk * (1 - mcid_arr))
+log_mcid <- log(mcid_or)
+
+# Define the priors based on the specifications
+
+# Skeptical Prior: 90% certainty of no clinically relevant effect, so only 10% of area 
+skeptical_sd <- abs(log_mcid / qnorm(0.10))
+skeptical_prior <- list(mu = 0, sigma = skeptical_sd)
+
+# Enthusiastic Prior: 30% probability of harm
+enthusiastic_sd <- abs(log_mcid) / qnorm(0.70)
+enthusiastic_prior <- list(mu = log_mcid, sigma = enthusiastic_sd)
+
+# Pessimistic Prior: 30% probability of benefit
+pessimistic_sd <- abs(log_mcid) / qnorm(0.70)
+pessimistic_prior <- list(mu = -log_mcid, sigma = pessimistic_sd)
+
+# Output the calculated values and the priors
+list(
+  log_or = log_or,
+  se_log_or = se_log_or,
+  skeptical_prior = skeptical_prior,
+  enthusiastic_prior = enthusiastic_prior,
+  pessimistic_prior = pessimistic_prior
+)
+
+```
+
+
+
+Conjugate analysis:
+
+```{r}
+# Function to calculate the posterior
+calc_conjugate_posterior <- function(log_or, se, prior) {
+  var_prior <- prior$sigma^2
+  var_data <- se^2
+  var_post <- 1 / (1 / var_prior + 1 / var_data)
+  mu_post <- var_post * (log_or / var_data + prior$mu / var_prior)
+  return(list(mu = mu_post, sigma = sqrt(var_post)))
+}
+
+# Calculate the posterior for the skeptical prior
+posterior_skeptical <- calc_conjugate_posterior(log_or, se_log_or, skeptical_prior)
+posterior_skeptical
+
+posterior_enthus <- calc_conjugate_posterior(log_or, se_log_or, enthusiastic_prior)
+posterior_enthus
+
+posterior_pess <- calc_conjugate_posterior(log_or, se_log_or, pessimistic_prior)
+posterior_pess
+```
+
+
+Show that this approximates the MCMC result:
+
+```{r model-fitting, include=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+#
+# Install rstanarm if not already installed
+library(rstanarm)
+# Globally set stan.verbose to FALSE
+options(stan.verbose = FALSE)
+
+# Redirect all output to NULL during model fitting
+sink(file = "/dev/null", type = "output")
+
+stan_model_code <- "
+data {
+  real logOR;             // Log odds ratio
+  real<lower=0> SE;       // Standard error
+  real<lower=0> sd_prior; // Standard deviation of the  prior
+  real mu_prior; // mean of the  prior
+}
+parameters {
+  real theta;  // Parameter (log odds ratio) to estimate
+}
+model {
+  // Skeptical prior for theta
+  theta ~ normal(mu_prior, sd_prior);
+  
+  // Likelihood
+  logOR ~ normal(theta, SE);
+}
+"
+
+# Prepare data for Stan, including skeptical_sd
+stan_data <- list(logOR = log_or, SE = se_log_or, sd_prior = skeptical_sd,mu_prior=0)
+
+# Run MCMC simulation
+fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains = 4,verbose = FALSE,refresh=0)
+```
+
+
+## Extract the results of the skeptical prior
+
+```{r}
+summary(fit)$summary
+```
+
+## now for pessimistic
+### Prepare data for Stan, including skeptical_sd
+
+```{r}
+stan_data <- list(logOR = log_or, SE = se_log_or, mu_prior=pessimistic_prior$mu,sd_prior = pessimistic_prior$sigma)
+
+# Run MCMC simulation
+fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains = 4,verbose = FALSE,refresh=0)
+
+# Extract the results
+summary(fit)$summary
+```
+
+## For the enthusiastic
+
+### Prepare data for Stan, including skeptical_sd
+
+```{r}
+stan_data <- list(logOR = log_or, SE = se_log_or, mu_prior=enthusiastic_prior$mu,sd_prior = enthusiastic_prior$sigma)
+
+# Run MCMC simulation
+fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains = 4,verbose = FALSE,refresh=0)
+
+# Extract the results
+summary(fit)$summary
+```
+
