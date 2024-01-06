@@ -30,20 +30,17 @@ quietly_load_library("foreach")
 
 ### Bayesian Model with Conjugate Multivariate Normal Priors
 
-In the CLEAR outcome trial, the aim was to find a clinically meaninful difference on MACE using Bempedoic Acid in statin-intolerance patients. 
+In the CLEAR outcome trial, the aim was to find a clinically meaninful difference on MACE using Bempedoic Acid in statin-intolerance patients.
 
 Let's first compare the primary outcomes (found significant) using a unimodal Normal shrinkage prior. We take advantage that the logOR is approximately normally distributed, and that the normal distribution has a conjugate (normal) prior. This means that the Posterior and Prior take the same form, and in the case of the normal distribtuion, so does the likelihood!
 
 # Univariate primary outcomes
 
-
-1. Skeptical Prior
+1.  Skeptical Prior
 
 Definition: A skeptical prior is centered at 0, with the standard deviation calculated such that only 10% of the probability mass is to the left of the Minimal Clinically Important Difference (MCID).
 
-Let MCID be the minimal clinically important difference converted to its log odds ratio equivalent, log_mcid.
-To find the standard deviation (sigma_skeptical), determine the z-score that leaves 90% of the distribution to the right of log_mcid. This z-score corresponds to the 10th percentile of the standard normal distribution.
-
+Let MCID be the minimal clinically important difference converted to its log odds ratio equivalent, log_mcid. To find the standard deviation (sigma_skeptical), determine the z-score that leaves 90% of the distribution to the right of log_mcid. This z-score corresponds to the 10th percentile of the standard normal distribution.
 
 ```{r}
 # Given data from the table
@@ -61,15 +58,31 @@ log_or <- log(or)
 # Calculate the standard error of the logOR
 se_log_or <- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)) + (1 / events_control) + (1 / (n_control - events_control)))
 
-# Define the MCID as an absolute risk reduction of 1.3%
-mcid_arr <- 0.013
-# Convert the absolute risk reduction to logOR for MCID
-# Assuming a baseline risk from the control group
-baseline_risk <- events_control / n_control
-mcid_or <- (baseline_risk - mcid_arr) / (baseline_risk * (1 - mcid_arr))
-log_mcid <- log(mcid_or)
+
 ```
 
+Now we need to define the MCID as an absolute risk reduction of 1.3% and convert the absolute risk reduction to logOR for MCID.
+
+```{r}
+mcid_arr <- 0.013
+
+# Assuming a baseline risk from the control group
+(baseline_risk <- events_control / n_control)
+
+# Calculate the risk in the treatment group
+risk_treatment <- baseline_risk - mcid_arr
+
+# Calculate the odds for control and treatment
+odds_control <- baseline_risk / (1 - baseline_risk)
+odds_treatment <- risk_treatment / (1 - risk_treatment)
+
+# Calculate the odds ratio (OR)
+or_mcid <- odds_treatment / odds_control
+
+# For Bayesian analysis, we often use the natural log of the OR
+(log_mcid <- log(or_mcid))
+
+```
 
 Here we show that these infact produce desired priors:
 
@@ -80,14 +93,9 @@ sigma_skeptical <- abs(log_mcid / z_skeptical)
 pnorm(log_mcid,sd=sigma_skeptical)
 ```
 
+2.  Enthusiastic Prior Definition: An enthusiastic prior is centered at MCID, with the standard deviation calculated such that there is a 30% probability of harm (logOR \> 0).
 
-2. Enthusiastic Prior
-Definition: An enthusiastic prior is centered at MCID, with the standard deviation calculated such that there is a 30% probability of harm (logOR > 0).
-
-
-
-For the enthusiastic prior, we want 70% of the distribution to be below 0 when the mean is at log_mcid.
-To find the standard deviation (sigma_enthusiastic), calculate the z-score that corresponds to the 70th percentile of the standard normal distribution.
+For the enthusiastic prior, we want 70% of the distribution to be below 0 when the mean is at log_mcid. To find the standard deviation (sigma_enthusiastic), calculate the z-score that corresponds to the 70th percentile of the standard normal distribution.
 
 ```{r}
 z_enthusiastic <- qnorm(0.70)
@@ -95,21 +103,18 @@ sigma_enthusiastic <- abs((0 - log_mcid) / z_enthusiastic)
 pnorm(0,mean=log_mcid,sd = sigma_enthusiastic)
 ```
 
-
-3. Pessimistic Prior
-Definition: A pessimistic prior is centered at -MCID, with the standard deviation calculated such that there is a 30% probability of benefit (logOR < 0).
+3.  Pessimistic Prior Definition: A pessimistic prior is centered at -MCID, with the standard deviation calculated such that there is a 30% probability of benefit (logOR \< 0).
 
 Calculation:
 
-For the pessimistic prior, we want 70% of the distribution to be above 0 when the mean is at -log_mcid.
-To find the standard deviation (sigma_pessimistic), calculate the z-score that corresponds to the 30th percentile of the standard normal distribution.
+For the pessimistic prior, we want 70% of the distribution to be above 0 when the mean is at -log_mcid. To find the standard deviation (sigma_pessimistic), calculate the z-score that corresponds to the 30th percentile of the standard normal distribution.
+
 ```{r}
 z_pessimistic <- qnorm(0.30)
 sigma_pessimistic <- abs((0 + log_mcid) / z_pessimistic)
 
 pnorm(0,mean=-log_mcid,sd = sigma_pessimistic)
 ```
-
 
 ```{r echo=FALSE}
 # Install necessary packages if not already installed
@@ -148,8 +153,19 @@ mcid_arr <- 0.013
 # Convert the absolute risk reduction to logOR for MCID
 # Assuming a baseline risk from the control group
 baseline_risk <- events_control / n_control
-mcid_or <- (baseline_risk - mcid_arr) / (baseline_risk * (1 - mcid_arr))
-log_mcid <- log(mcid_or)
+
+# Calculate the risk in the treatment group
+risk_treatment <- baseline_risk - mcid_arr
+
+# Calculate the odds for control and treatment
+odds_control <- baseline_risk / (1 - baseline_risk)
+odds_treatment <- risk_treatment / (1 - risk_treatment)
+
+# Calculate the odds ratio (OR)
+or <- odds_treatment / odds_control
+
+# For Bayesian analysis, we often use the natural log of the OR
+log_or <- log(or)
 
 # Define the priors based on the specifications
 
@@ -176,8 +192,6 @@ list(
 
 ```
 
-
-
 Conjugate analysis:
 
 ```{r}
@@ -200,7 +214,6 @@ posterior_enthus
 posterior_pess <- calc_conjugate_posterior(log_or, se_log_or, pessimistic_prior)
 posterior_pess
 ```
-
 
 Show that this approximates the MCMC result:
 
@@ -240,7 +253,6 @@ stan_data <- list(logOR = log_or, SE = se_log_or, sd_prior = skeptical_sd,mu_pri
 fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains = 4,verbose = FALSE,refresh=0)
 ```
 
-
 ## Extract the results of the skeptical prior
 
 ```{r}
@@ -248,6 +260,7 @@ summary(fit)$summary
 ```
 
 ## now for pessimistic
+
 ### Prepare data for Stan, including skeptical_sd
 
 ```{r}
@@ -274,3 +287,83 @@ fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains 
 summary(fit)$summary
 ```
 
+Now for the reference prior..
+
+```{r,eval=F,echo=T}
+# Load the required packages
+library(brms)
+library(tidybayes)
+library(rstan)
+library(dplyr)
+library(ggplot2)
+
+# Enter the data from the table into a data frame
+meta_data <- data.frame(
+  study = c("Goldberg et al., 2019", "Laufs et al., 2019", "Ray et al., 2019", "Nissen et al., 2023"),
+  group = rep(c("Bempedoic Acid", "Placebo"), each = 4),
+  events = c(32, 9, 68, 831, 21, 0, 42, 952),
+  total = c(522, 234, 1487, 6992, 257, 111, 742, 6978)
+)
+
+# Prior data from all but the Nissen study
+prior_data <- meta_data[meta_data$study != "Nissen et al., 2023",]
+
+# Likelihood data from the Nissen study
+likelihood_data <- meta_data[meta_data$study == "Nissen et al., 2023",]
+
+# Formula for meta-analysis with random effects for prior data
+prior_formula <- bf(
+  events | trials(total) ~ 0 + group + (1|study)
+)
+
+# Define priors for the prior data model
+# Here you may start with non-informative or weakly informative priors
+prior_priors <- c(
+  prior(normal(0, 5), class = b, coef = "groupBempedoicAcid"),
+  prior(cauchy(0, 0.5), class = sd)
+)
+
+# Fit the model to the prior data
+prior_model <- brm(
+  formula = prior_formula, 
+  data = prior_data, 
+  family = binomial(),
+  prior = prior_priors,
+  seed = 123, # for reproducibility
+  control = list(adapt_delta = 0.95) # for computational stability
+)
+# Extract posterior estimates to inform new priors
+posterior_estimates <- summary(prior_model)$fixed 
+
+# Extract the mean and standard deviation for the treatment effect (Bempedoic Acid)
+bempedoic_effect_mean <- posterior_estimates["groupBempedoic Acid", "Estimate"]
+bempedoic_effect_sd <- posterior_estimates["groupBempedoic Acid", "Est.Error"]
+
+# Define the new priors for the full model including Nissen data
+new_priors <- c(
+  prior(normal(bempedoic_effect_mean, bempedoic_effect_sd), class = b, coef = "groupBempedoic Acid"),
+  prior(cauchy(0, 0.5), class = sd) # Assuming heterogeneity prior remains the same
+)
+
+full_formula <- bf(
+  events | trials(total) ~ 0 + group + (1|study)
+)
+
+# Fit the full model including the Nissen study
+full_model <- brm(
+  formula = full_formula,
+  data = meta_data, # Note this is the full dataset including Nissen
+  family = binomial(),
+  prior = new_priors,
+  seed = 123, # for reproducibility
+  control = list(adapt_delta = 0.95) # for computational stability
+)
+
+# Summarize the full model
+summary(full_model)
+
+# Extract the posterior samples for the full model
+posterior_full_samples <- posterior_samples(full_model)
+
+
+```

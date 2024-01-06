@@ -418,10 +418,10 @@ changes </a>
 <div id="strongRMarkdownfilestronguncommittedchanges"
 class="panel-collapse collapse">
 <div class="panel-body">
-<p>The R Markdown is untracked by Git. To know which version of the R
-Markdown file created these results, you’ll want to first commit it to
-the Git repo. If you’re still working on the analysis, you can ignore
-this warning. When you’re finished, you can run
+<p>The R Markdown file has unstaged changes. To know which version of
+the R Markdown file created these results, you’ll want to first commit
+it to the Git repo. If you’re still working on the analysis, you can
+ignore this warning. When you’re finished, you can run
 <code>wflow_publish</code> to commit the R Markdown file and build the
 HTML.</p>
 </div>
@@ -514,15 +514,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree786095ce4c6c1d3eb93864fe1e6513712fe48637targetblank786095ca">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree41823f1e9a30c7f242514381e7d600050a2fcb51targetblank41823f1a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/surbut/bayesclinical/tree/786095ce4c6c1d3eb93864fe1e6513712fe48637" target="_blank">786095c</a>
+<a href="https://github.com/surbut/bayesclinical/tree/41823f1e9a30c7f242514381e7d600050a2fcb51" target="_blank">41823f1</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree786095ce4c6c1d3eb93864fe1e6513712fe48637targetblank786095ca"
+id="strongRepositoryversionstrongahrefhttpsgithubcomsurbutbayesclinicaltree41823f1e9a30c7f242514381e7d600050a2fcb51targetblank41823f1a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -532,7 +532,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/surbut/bayesclinical/tree/786095ce4c6c1d3eb93864fe1e6513712fe48637" target="_blank">786095c</a>.
+<a href="https://github.com/surbut/bayesclinical/tree/41823f1e9a30c7f242514381e7d600050a2fcb51" target="_blank">41823f1</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -546,12 +546,8 @@ depends on. Below is the status of the Git repository when the results
 were generated:
 </p>
 <pre><code>
-Untracked files:
-    Untracked:  analysis/clear-copy.Rmd
-    Untracked:  analysis/clear2.Rmd
-
 Unstaged changes:
-    Deleted:    analysis/clear copy.Rmd
+    Modified:   analysis/clear2.Rmd
 
 </code></pre>
 <p>
@@ -566,10 +562,73 @@ have uncommitted changes.
 <hr>
 </div>
 <div id="versions" class="tab-pane fade">
+
 <p>
-There are no past versions. Publish this analysis with
-<code>wflow_publish()</code> to start tracking its development.
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/clear2.Rmd</code>) and HTML
+(<code>docs/clear2.html</code>) files. If you’ve configured a remote Git
+repository (see <code>?wflow_git_remote</code>), click on the hyperlinks
+in the table below to view the files as they were in that past version.
 </p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/surbut/bayesclinical/blob/41823f1e9a30c7f242514381e7d600050a2fcb51/analysis/clear2.Rmd" target="_blank">41823f1</a>
+</td>
+<td>
+Sarah Urbut
+</td>
+<td>
+2024-01-06
+</td>
+<td>
+Update
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/surbut/bayesclinical/41823f1e9a30c7f242514381e7d600050a2fcb51/docs/clear2.html" target="_blank">41823f1</a>
+</td>
+<td>
+Sarah Urbut
+</td>
+<td>
+2024-01-06
+</td>
+<td>
+Update
+</td>
+</tr>
+</tbody>
+</table>
+</div>
 <hr>
 </div>
 </div>
@@ -613,15 +672,27 @@ or &lt;- (events_treatment / (n_treatment - events_treatment)) / (events_control
 log_or &lt;- log(or)
 
 # Calculate the standard error of the logOR
-se_log_or &lt;- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)) + (1 / events_control) + (1 / (n_control - events_control)))
+se_log_or &lt;- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)) + (1 / events_control) + (1 / (n_control - events_control)))</code></pre>
+<p>Now we need to define the MCID as an absolute risk reduction of 1.3%
+and convert the absolute risk reduction to logOR for MCID.</p>
+<pre class="r"><code>mcid_arr &lt;- 0.013
 
-# Define the MCID as an absolute risk reduction of 1.3%
-mcid_arr &lt;- 0.013
-# Convert the absolute risk reduction to logOR for MCID
 # Assuming a baseline risk from the control group
-baseline_risk &lt;- events_control / n_control
-mcid_or &lt;- (baseline_risk - mcid_arr) / (baseline_risk * (1 - mcid_arr))
-log_mcid &lt;- log(mcid_or)</code></pre>
+(baseline_risk &lt;- events_control / n_control)</code></pre>
+<pre><code>[1] 0.1328461</code></pre>
+<pre class="r"><code># Calculate the risk in the treatment group
+risk_treatment &lt;- baseline_risk - mcid_arr
+
+# Calculate the odds for control and treatment
+odds_control &lt;- baseline_risk / (1 - baseline_risk)
+odds_treatment &lt;- risk_treatment / (1 - risk_treatment)
+
+# Calculate the odds ratio (OR)
+or_mcid &lt;- odds_treatment / odds_control
+
+# For Bayesian analysis, we often use the natural log of the OR
+(log_mcid &lt;- log(or_mcid))</code></pre>
+<pre><code>[1] -0.1178632</code></pre>
 <p>Here we show that these infact produce desired priors:</p>
 <pre class="r"><code>z_skeptical &lt;- qnorm(0.10)
 sigma_skeptical &lt;- abs(log_mcid / z_skeptical)
@@ -656,7 +727,7 @@ sigma_pessimistic &lt;- abs((0 + log_mcid) / z_pessimistic)
 pnorm(0,mean=-log_mcid,sd = sigma_pessimistic)</code></pre>
 <pre><code>[1] 0.3</code></pre>
 <pre><code>$log_or
-[1] -0.1438309
+[1] -0.1178632
 
 $se_log_or
 [1] 0.05125434
@@ -666,23 +737,23 @@ $skeptical_prior$mu
 [1] 0
 
 $skeptical_prior$sigma
-[1] 0.07014752
+[1] 0.09196915
 
 
 $enthusiastic_prior
 $enthusiastic_prior$mu
-[1] -0.08989767
+[1] -0.1178632
 
 $enthusiastic_prior$sigma
-[1] 0.1714294
+[1] 0.224758
 
 
 $pessimistic_prior
 $pessimistic_prior$mu
-[1] 0.08989767
+[1] 0.1178632
 
 $pessimistic_prior$sigma
-[1] 0.1714294</code></pre>
+[1] 0.224758</code></pre>
 <p>Conjugate analysis:</p>
 <pre class="r"><code># Function to calculate the posterior
 calc_conjugate_posterior &lt;- function(log_or, se, prior) {
@@ -697,35 +768,35 @@ calc_conjugate_posterior &lt;- function(log_or, se, prior) {
 posterior_skeptical &lt;- calc_conjugate_posterior(log_or, se_log_or, skeptical_prior)
 posterior_skeptical</code></pre>
 <pre><code>$mu
-[1] -0.09376984
+[1] -0.08993193
 
 $sigma
-[1] 0.04138435</code></pre>
+[1] 0.04477117</code></pre>
 <pre class="r"><code>posterior_enthus &lt;- calc_conjugate_posterior(log_or, se_log_or, enthusiastic_prior)
 posterior_enthus</code></pre>
 <pre><code>$mu
-[1] -0.1394054
+[1] -0.1178632
 
 $sigma
-[1] 0.04910649</code></pre>
+[1] 0.04997147</code></pre>
 <pre class="r"><code>posterior_pess &lt;- calc_conjugate_posterior(log_or, se_log_or, pessimistic_prior)
 posterior_pess</code></pre>
 <pre><code>$mu
-[1] -0.1246522
+[1] -0.1062106
 
 $sigma
-[1] 0.04910649</code></pre>
+[1] 0.04997147</code></pre>
 <p>Show that this approximates the MCMC result:</p>
 <div id="extract-the-results-of-the-skeptical-prior"
 class="section level2">
 <h2>Extract the results of the skeptical prior</h2>
 <pre class="r"><code>summary(fit)$summary</code></pre>
-<pre><code>             mean      se_mean         sd       2.5%        25%         50%
-theta -0.09455897 0.0008344454 0.04185333 -0.1755401 -0.1229145 -0.09493434
-lp__  -1.88195635 0.0119429764 0.73309177 -3.8781666 -2.0408962 -1.60108726
-              75%       97.5%    n_eff     Rhat
-theta -0.06630877 -0.01158647 2515.732 1.002415
-lp__  -1.42241842 -1.37088005 3767.832 1.000226</code></pre>
+<pre><code>            mean     se_mean         sd       2.5%        25%         50%
+theta -0.0892656 0.000890657 0.04464103 -0.1762427 -0.1194514 -0.08848905
+lp__  -1.1237279 0.011592876 0.69327201 -3.0625956 -1.2852654 -0.85295286
+              75%         97.5%    n_eff     Rhat
+theta -0.05911617 -0.0006255115 2512.161 1.001086
+lp__  -0.67934551 -0.6271662712 3576.226 1.000740</code></pre>
 </div>
 <div id="now-for-pessimistic" class="section level2">
 <h2>now for pessimistic</h2>
@@ -740,11 +811,11 @@ fit &lt;- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chai
 # Extract the results
 summary(fit)$summary</code></pre>
 <pre><code>            mean      se_mean        sd       2.5%        25%        50%
-theta -0.1249634 0.0009580854 0.0495121 -0.2203992 -0.1584284 -0.1253234
-lp__  -1.3614278 0.0126301339 0.7182421 -3.4061126 -1.5309233 -1.0764587
+theta -0.1056423 0.0009116835 0.0497107 -0.2022624 -0.1388499 -0.1058686
+lp__  -1.0176023 0.0123111314 0.7018088 -3.0300432 -1.1807749 -0.7402667
               75%       97.5%    n_eff     Rhat
-theta -0.09283214 -0.02735191 2670.633 1.000633
-lp__  -0.90302780 -0.85371258 3233.895 1.000694</code></pre>
+theta -0.07286114 -0.00677361 2973.114 1.000089
+lp__  -0.57388325 -0.52320057 3249.688 1.000736</code></pre>
 </div>
 </div>
 <div id="for-the-enthusiastic" class="section level2">
@@ -759,12 +830,87 @@ fit &lt;- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chai
 
 # Extract the results
 summary(fit)$summary</code></pre>
-<pre><code>            mean      se_mean         sd       2.5%        25%        50%
-theta -0.1380038 0.0008966225 0.04958094 -0.2361359 -0.1717690 -0.1362131
-lp__  -0.5554804 0.0111581015 0.71455297 -2.5620120 -0.7290578 -0.2815815
-              75%       97.5%    n_eff     Rhat
-theta -0.10434906 -0.04266639 3057.808 1.002104
-lp__  -0.09857078 -0.04588924 4100.986 1.000201</code></pre>
+<pre><code>            mean      se_mean         sd      2.5%        25%        50%
+theta -0.1167074 0.0009502531 0.04938065 -0.215788 -0.1506633 -0.1155994
+lp__  -0.4884533 0.0121469272 0.67127462 -2.434386 -0.6476539 -0.2353314
+              75%         97.5%    n_eff     Rhat
+theta -0.08230485 -0.0210853140 2700.443 1.000945
+lp__  -0.05520860 -0.0005307251 3053.990 1.002110</code></pre>
+<p>Now for the reference prior..</p>
+<pre class="r"><code># Load the required packages
+library(brms)
+library(tidybayes)
+library(rstan)
+library(dplyr)
+library(ggplot2)
+
+# Enter the data from the table into a data frame
+meta_data &lt;- data.frame(
+  study = c(&quot;Goldberg et al., 2019&quot;, &quot;Laufs et al., 2019&quot;, &quot;Ray et al., 2019&quot;, &quot;Nissen et al., 2023&quot;),
+  group = rep(c(&quot;Bempedoic Acid&quot;, &quot;Placebo&quot;), each = 4),
+  events = c(32, 9, 68, 831, 21, 0, 42, 952),
+  total = c(522, 234, 1487, 6992, 257, 111, 742, 6978)
+)
+
+# Prior data from all but the Nissen study
+prior_data &lt;- meta_data[meta_data$study != &quot;Nissen et al., 2023&quot;,]
+
+# Likelihood data from the Nissen study
+likelihood_data &lt;- meta_data[meta_data$study == &quot;Nissen et al., 2023&quot;,]
+
+# Formula for meta-analysis with random effects for prior data
+prior_formula &lt;- bf(
+  events | trials(total) ~ 0 + group + (1|study)
+)
+
+# Define priors for the prior data model
+# Here you may start with non-informative or weakly informative priors
+prior_priors &lt;- c(
+  prior(normal(0, 5), class = b, coef = &quot;groupBempedoicAcid&quot;),
+  prior(cauchy(0, 0.5), class = sd)
+)
+
+# Fit the model to the prior data
+prior_model &lt;- brm(
+  formula = prior_formula, 
+  data = prior_data, 
+  family = binomial(),
+  prior = prior_priors,
+  seed = 123, # for reproducibility
+  control = list(adapt_delta = 0.95) # for computational stability
+)
+# Extract posterior estimates to inform new priors
+posterior_estimates &lt;- summary(prior_model)$fixed 
+
+# Extract the mean and standard deviation for the treatment effect (Bempedoic Acid)
+bempedoic_effect_mean &lt;- posterior_estimates[&quot;groupBempedoic Acid&quot;, &quot;Estimate&quot;]
+bempedoic_effect_sd &lt;- posterior_estimates[&quot;groupBempedoic Acid&quot;, &quot;Est.Error&quot;]
+
+# Define the new priors for the full model including Nissen data
+new_priors &lt;- c(
+  prior(normal(bempedoic_effect_mean, bempedoic_effect_sd), class = b, coef = &quot;groupBempedoic Acid&quot;),
+  prior(cauchy(0, 0.5), class = sd) # Assuming heterogeneity prior remains the same
+)
+
+full_formula &lt;- bf(
+  events | trials(total) ~ 0 + group + (1|study)
+)
+
+# Fit the full model including the Nissen study
+full_model &lt;- brm(
+  formula = full_formula,
+  data = meta_data, # Note this is the full dataset including Nissen
+  family = binomial(),
+  prior = new_priors,
+  seed = 123, # for reproducibility
+  control = list(adapt_delta = 0.95) # for computational stability
+)
+
+# Summarize the full model
+summary(full_model)
+
+# Extract the posterior samples for the full model
+posterior_full_samples &lt;- posterior_samples(full_model)</code></pre>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -811,37 +957,38 @@ loaded via a namespace (and not attached):
  [13] rstatix_0.7.2        htmltools_0.5.7      distributional_0.3.2
  [16] curl_5.1.0           broom_1.0.5          sass_0.4.7          
  [19] bslib_0.6.0          htmlwidgets_1.6.3    plyr_1.8.9          
- [22] zoo_1.8-12           cachem_1.0.8         igraph_1.5.1        
- [25] mime_0.12            lifecycle_1.0.4      iterators_1.0.14    
- [28] pkgconfig_2.0.3      colourpicker_1.3.0   R6_2.5.1            
- [31] fastmap_1.1.1        shiny_1.8.0          digest_0.6.33       
- [34] colorspace_2.1-0     ps_1.7.5             rprojroot_2.0.4     
- [37] crosstalk_1.2.1      timechange_0.2.0     fansi_1.0.5         
- [40] abind_1.4-5          compiler_4.3.1       withr_2.5.2         
- [43] backports_1.4.1      inline_0.3.19        shinystan_2.6.0     
- [46] carData_3.0-5        QuickJSR_1.0.9       pkgbuild_1.4.2      
- [49] ggsignif_0.6.4       gtools_3.9.5         loo_2.6.0           
- [52] tools_4.3.1          httpuv_1.6.12        threejs_0.3.3       
- [55] glue_1.6.2           callr_3.7.3          nlme_3.1-163        
- [58] promises_1.2.1       grid_4.3.1           checkmate_2.3.0     
- [61] generics_0.1.3       gtable_0.3.4         tzdb_0.4.0          
- [64] hms_1.1.3            car_3.1-2            utf8_1.2.4          
- [67] pillar_1.9.0         ggdist_3.3.1         markdown_1.11       
- [70] posterior_1.5.0      later_1.3.1          splines_4.3.1       
- [73] lattice_0.22-5       survival_3.5-7       tidyselect_1.2.0    
- [76] miniUI_0.1.1.1       knitr_1.45           git2r_0.32.0        
- [79] arrayhelpers_1.1-0   V8_4.4.0             stats4_4.3.1        
- [82] xfun_0.41            bridgesampling_1.1-2 matrixStats_1.1.0   
- [85] DT_0.31              stringi_1.8.2        boot_1.3-28.1       
- [88] workflowr_1.7.1      yaml_2.3.7           evaluate_0.23       
- [91] codetools_0.2-19     cli_3.6.1            RcppParallel_5.1.7  
- [94] shinythemes_1.2.0    xtable_1.8-4         munsell_0.5.0       
- [97] processx_3.8.2       jquerylib_0.1.4      coda_0.19-4         
-[100] svUnit_1.0.6         parallel_4.3.1       rstantools_2.3.1.1  
-[103] ellipsis_0.3.2       prettyunits_1.2.0    dygraphs_1.1.1.6    
-[106] bayesplot_1.10.0     Brobdingnag_1.2-9    lme4_1.1-35.1       
-[109] mvtnorm_1.2-3        scales_1.2.1         xts_0.13.1          
-[112] crayon_1.5.2         rlang_1.1.2          shinyjs_2.1.0       </code></pre>
+ [22] zoo_1.8-12           cachem_1.0.8         whisker_0.4.1       
+ [25] igraph_1.5.1         mime_0.12            lifecycle_1.0.4     
+ [28] iterators_1.0.14     pkgconfig_2.0.3      colourpicker_1.3.0  
+ [31] R6_2.5.1             fastmap_1.1.1        shiny_1.8.0         
+ [34] digest_0.6.33        colorspace_2.1-0     ps_1.7.5            
+ [37] rprojroot_2.0.4      crosstalk_1.2.1      timechange_0.2.0    
+ [40] fansi_1.0.5          abind_1.4-5          compiler_4.3.1      
+ [43] withr_2.5.2          backports_1.4.1      inline_0.3.19       
+ [46] shinystan_2.6.0      carData_3.0-5        QuickJSR_1.0.9      
+ [49] pkgbuild_1.4.2       ggsignif_0.6.4       gtools_3.9.5        
+ [52] loo_2.6.0            tools_4.3.1          httpuv_1.6.12       
+ [55] threejs_0.3.3        glue_1.6.2           callr_3.7.3         
+ [58] nlme_3.1-163         promises_1.2.1       grid_4.3.1          
+ [61] checkmate_2.3.0      generics_0.1.3       gtable_0.3.4        
+ [64] tzdb_0.4.0           hms_1.1.3            car_3.1-2           
+ [67] utf8_1.2.4           pillar_1.9.0         ggdist_3.3.1        
+ [70] markdown_1.11        posterior_1.5.0      later_1.3.1         
+ [73] splines_4.3.1        lattice_0.22-5       survival_3.5-7      
+ [76] tidyselect_1.2.0     miniUI_0.1.1.1       knitr_1.45          
+ [79] git2r_0.32.0         arrayhelpers_1.1-0   V8_4.4.0            
+ [82] stats4_4.3.1         xfun_0.41            bridgesampling_1.1-2
+ [85] matrixStats_1.1.0    DT_0.31              stringi_1.8.2       
+ [88] boot_1.3-28.1        workflowr_1.7.1      yaml_2.3.7          
+ [91] evaluate_0.23        codetools_0.2-19     cli_3.6.1           
+ [94] RcppParallel_5.1.7   shinythemes_1.2.0    xtable_1.8-4        
+ [97] munsell_0.5.0        processx_3.8.2       jquerylib_0.1.4     
+[100] coda_0.19-4          svUnit_1.0.6         parallel_4.3.1      
+[103] rstantools_2.3.1.1   ellipsis_0.3.2       prettyunits_1.2.0   
+[106] dygraphs_1.1.1.6     bayesplot_1.10.0     Brobdingnag_1.2-9   
+[109] lme4_1.1-35.1        mvtnorm_1.2-3        scales_1.2.1        
+[112] xts_0.13.1           crayon_1.5.2         rlang_1.1.2         
+[115] shinyjs_2.1.0       </code></pre>
 </div>
 </div>
 </div>
