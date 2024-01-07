@@ -129,7 +129,6 @@ library(ggplot2)
 library(reshape2)  # For melting data frames
 library(gridExtra)  # 
 library(ggpubr)
-library(kernlab)
 
 # Load necessary library
 library(tidyverse)
@@ -219,12 +218,10 @@ posterior_pess
 Show that this approximates the MCMC result:
 
 ```{r model-fitting, include=FALSE,message=FALSE, warning=FALSE, error=FALSE,echo=TRUE}
-#
 # Install rstanarm if not already installed
 library(rstanarm)
 # Globally set stan.verbose to FALSE
 options(stan.verbose = FALSE)
-
 # Redirect all output to NULL during model fitting
 sink(file = "/dev/null", type = "output")
 
@@ -288,31 +285,17 @@ fit <- stan(model_code = stan_model_code, data = stan_data, iter = 4000, chains 
 summary(fit)$summary
 ```
 
-## Now for the reference prior, we will perform a Bayesian meta analysis, and then use the results in both a conjugate and MCMC analysis to show the results match.
+## Reference Prior
+
+Now for the reference prior, we will perform a Bayesian meta analysis, and then use the results in both a conjugate and MCMC analysis to show the results match.
 
 
 \item A separate baseline risk of CAD for each study (via factor(study)).
 \item A common treatment effect of Bempedoic acid across all studies (via the bpd term).
 \item Variation in the treatment effect of Bpd across different studies (via the random effect (bpd - 1|study)).
 
-First, we will conduct a meta-analysis of the 3 RCTs that tested similar filter-based devices. This meta-analysis will form the basis of our subsequent prior.
 
-```{r,eval=T,echo=T}
-#Load the packages & functions that we will need for this analysis
-require("brms")
-require("tidybayes")
-detach("package:rstanarm", unload = TRUE)
-detach("package:rstan", unload = TRUE)
-require("dplyr")
-require("ggplot2")
-require("ggridges")
-require("ggpubr")
-require("ggthemes")
-require("bpp")
-require("foreach")
-
-
-
+```{r,echo=FALSE}
 #Trial 1: goldberg et al
 goldberg <- data.frame(
   study = "goldberg",
@@ -321,7 +304,7 @@ goldberg <- data.frame(
   #Total sample size in each group
   events_n = c(32, 21),
   #Patients with MACE in each group
-  bpd = c(0.5,-0.5) #bpd (Yes/No)
+  bpd = c(1,0) #bpd (Yes/No)
 )
 
 #Trial 2: laufs et al
@@ -332,7 +315,7 @@ laufs <- data.frame(
   #Total sample size in each group
   events_n = c(9, 0),
   #Patients with MACE in each group
-  bpd = c(0.5,-0.5) #bpd 1/0 (Yes/No)
+  bpd = c(1,0) #bpd 1/0 (Yes/No)
 )
 
 
@@ -344,74 +327,139 @@ ray <- data.frame(
   #Total sample size in each group
   events_n = c(68, 42),
   #Patients with MACE in each group
-  bpd = c(0.5,-0.5) #bpd 1/0 (Yes/No)
+  bpd = c(1,0) #bpd 1/0 (Yes/No)
 )
 
 
 #Combine the data from the 6 trials into a single dataframe
 combined_data <- rbind(goldberg, ray, laufs)
 
-#Now, we will write the formula we will use in the regression model
-ma_formula <- bf(events_n |
-                   trials(total_n) ~ 0 + #Remove the intercept from the model (such that the risk of stroke is not modeled using a common term but is modeled separately for each study)
-                   factor(study) + #A term to refer to each study
-                   bpd + # Fixed treatment effect of bpd
-                   (bpd - 1 |study)) # We allow for a random slope, but a fixed intercept effect
-                 
 ```
 
+First, we will conduct a meta-analysis of the 3 RCTs that tested similar filter-based devices. This meta-analysis will form the basis of our subsequent prior.
 
 Now, we will set up our priors (on the log-odds scale), as we recall that the natural link for a binomial process is the logit function, and the logOR is normally distributed.
 
 \item Treatment effect prior, is `flat' suggesting that all the information will be gelamed from the observed studies which will inform our later posterior
 
-\item Fixed effect prior for MACE within the population, which is centered on the logOR of 13% (-2) that we observed previously
+\item Fixed effect prior for MACE within the population, which is centered on the logOR of 6% (-2.8) that we observe in the placebo arms here
 
 \item Heterogeneity prior, a 'fat tailed' cauchy prior with sd 0.5, commonly chosen in meta analyses
 
-```{r,eval=T,echo=TRUE}
-#Prior for the Treatment effect of BPD (a normal distribution with a mean of 0 and a standard deviation of 10 implies a flat prior (we are unsure if the prior effect is small or large)
-bpd_prior <- prior(normal(0, 10), class = b, coef = "bpd")
+We write this as a formula 
+```{r,echo=T, eval = FALSE}
+events/total ~ 0 + factor(study) + bpd + (bpd - 1 | study)` 
+```
 
-#Prior for the Baseline risk of MACE (this prior is centered on a baseline risk of CAD of 13.%, recall from th baseline analysis: log(baseline_risk))
-## really thing here if each study has it's own fixed effect, we need to specify this (or allow for a random MACE effect )
+1. The baseline MACE rate for each study, which is captured by `0 + factor(study)`. This part of the model says that each study has its own baseline rate of MACE, with no overall intercept (because of the `0 +`).
 
-#The stroke_prior that you mentioned, prior(normal(-3.2, 0.5), class = b), is indeed for the fixed effects. But without specifying coef, it is not clear whether this prior is meant for the intercepts created by factor(study) or for another fixed effect. If you want this prior to be applied to the intercepts for each study (which you've modeled as fixed effects by using factor(study)), you would need to clarify that in the prior specification, typically by specifying each coefficient if they are to be treated differently.
-# #stroke_prior <- c(set_prior("normal(-3.2, 0.5)", class = "b", coef = "study1"),
-#                   set_prior("normal(-3.2, 0.5)", class = "b", coef = "study2"),
-#                   ... and so on for each study ...)
+2. The shared treatment effect of BPD, which is captured by `bpd`. This is a fixed effect that is consistent across all studies. It represents the average effect of BPD on MACE across all studies.
 
-mace_prior <- prior(normal(-2, 0.5), class = b)
+3. The random effect of BPD by study, which is captured by `(bpd - 1 | study)`. This term allows the effect of BPD to vary for each study around the overall average treatment effect. This is where the variability in treatment effect between studies is modeled.
 
-#Prior for between-trial Heterogeneity (this prior expresses our uncertainty about how similar trials are to one another in terms of the effectiveness of bpd. A half-cauchy with a scale parameter of 0.5 represents a common choice in most meta-analyses)
-heterogeneity_prior <- prior(cauchy(0, 0.5), class = sd)
+Given out description, here’s how we should set your priors:
 
-#Now, we will collect these priors together and store them in "ma_priors" (ma: meta-analysis)
-ma_priors <- c(bpd_prior, mace_prior, heterogeneity_prior)
+- For the baseline MACE rate for each study, you want to set a separate prior for each study. These are fixed effects and should be given a normal prior centered around the log-odds you mentioned, corresponding to a 4% rate.
 
-#Because Bayesian analyses can be somewhat time-consuming, we will use all the cores our machine has to increase computational speed
+- For the shared treatment effect of BPD, you would set a prior reflecting your belief about the average effect of BPD. This prior would be on a global scale, not varying by study.
+
+- For the random effect of BPD by study, you would set a prior that reflects your uncertainty in the variability of the BPD effect across studies. This is typically a prior on the standard deviation of the random effect.
+
+So, your priors could look something like this:
+
+```{r}
+# Set priors for the baseline MACE rate for each study
+study_priors <- c(
+  prior(normal(-2.8, 0.5), class = "b", coef = "factorstudygoldberg"),
+  prior(normal(-2.8, 0.5), class = "b", coef = "factorstudylaufs"),
+  prior(normal(-2.8, 0.5), class = "b", coef = "factorstudyray")
+)
+
+# Set a prior for the shared treatment effect of BPD
+bpd_effect_prior <- prior(normal(0, 10), class = "b", coef = "bpd")
+
+# Set a prior for the variability in BPD effect across studies
+bpd_study_sd_prior <- prior(cauchy(0, 0.5), class = "sd", group = "study")
+
+# Combine all the priors
+ma_priors <- c(study_priors, bpd_effect_prior, bpd_study_sd_prior)
+```
+
+
+#Now, we will write the formula we will use in the regression model
+
+```{r}
+ma_formula <- bf(events_n |
+                   trials(total_n) ~ 0 + #Remove the intercept from the model (such that the risk of stroke is not modeled using a common term but is modeled separately for each study)
+                   factor(study) + #A term to refer to each study
+                   bpd + # Fixed treatment effect of bpd
+                   (bpd - 1 |study)) # We allow for a random slope, but a fixed intercept effect
+
 options(mc.cores = parallel::detectCores())
-
 
 ma_model <-
   brm(
+    ma_formula,
     data = combined_data,
-    #Use the combined dataset for the 6 trials
-    family = binomial,
-    #Using a binomial distribution (Since our outcome is a binary MACE/noMACE
-    formula = ma_formula,
-    #Use our formula
-    seed = 100,
-    #Set seed for reproducibility
+    family = binomial(),
     prior = ma_priors,
-    #Use our prior
-    control = list(adapt_delta = 0.99) 
+    seed = 100,
+    control = list(adapt_delta = 0.99)
   )
-saveRDS(ma_model,"~/Library/CloudStorage/Dropbox-Personal/ma_model.rds")
+
 ```
 
-```{r}
-ma_model=readRDS("~/Library/CloudStorage/Dropbox-Personal/ma_model.rds")
+
+This setup should align with your objectives of modeling the baseline rate separately for each study, a common treatment effect, and variability in that treatment effect across studies.
+
+```{r,eval=F,echo=FALSE}
+# #Prior for the Treatment effect of BPD (a normal distribution with a mean of 0 and a standard deviation of 10 implies a flat prior (we are unsure if the prior effect is small or large)
+# bpd_prior <- prior(normal(0, 10), class = b, coef = "bpd")
+# 
+# #Prior for the Baseline risk of MACE (this prior is centered on a baseline risk of CAD of 13.%, recall from th baseline analysis: log(baseline_risk))
+# ## really thing here if each study has it's own fixed effect, we need to specify this (or allow for a random MACE effect )
+# 
+# #The stroke_prior that you mentioned, prior(normal(-3.2, 0.5), class = b), is indeed for the fixed effects. But without specifying coef, it is not clear whether this prior is meant for the intercepts created by factor(study) or for another fixed effect. If you want this prior to be applied to the intercepts for each study (which you've modeled as fixed effects by using factor(study)), you would need to clarify that in the prior specification, typically by specifying each coefficient if they are to be treated differently.
+# # #stroke_prior <- c(set_prior("normal(-3.2, 0.5)", class = "b", coef = "study1"),
+# #                   set_prior("normal(-3.2, 0.5)", class = "b", coef = "study2"),
+# #                   ... and so on for each study ...)
+# 
+# mace_prior <- prior(normal(-2, 0.5), class = b)
+# 
+# mace_prior <- c(set_prior("normal(-3.2, 0.5)", class = "b", coef = "study1"),
+#                   set_prior("normal(-3.2, 0.5)", class = "b", coef = "study2"),
+#                             set_prior("normal(-3.2, 0.5)", class = "b", coef = "study3"))
+#                  
+# #Prior for between-trial Heterogeneity (this prior expresses our uncertainty about how similar trials are to one another in terms of the effectiveness of bpd. A half-cauchy with a scale parameter of 0.5 represents a common choice in most meta-analyses)
+# heterogeneity_prior <- prior(cauchy(0, 0.5), class = sd)
+# 
+# #Now, we will collect these priors together and store them in "ma_priors" (ma: meta-analysis)
+# ma_priors <- c(bpd_prior, mace_prior, heterogeneity_prior)
+# 
+# #Because Bayesian analyses can be somewhat time-consuming, we will use all the cores our machine has to increase computational speed
+# options(mc.cores = parallel::detectCores())
+# 
+# 
+# ma_model <-
+#   brm(
+#     data = combined_data,
+#     #Use the combined dataset for the 6 trials
+#     family = binomial,
+#     #Using a binomial distribution (Since our outcome is a binary MACE/noMACE
+#     formula = ma_formula,
+#     #Use our formula
+#     seed = 100,
+#     #Set seed for reproducibility
+#     prior = ma_priors,
+#     #Use our prior
+#     control = list(adapt_delta = 0.99) 
+#   )
+#saveRDS(ma_model,"~/Library/CloudStorage/Dropbox-Personal/ma_model.rds")
+```
+
+
+```{r plotting,echo=F}
+#ma_model=readRDS("~/Library/CloudStorage/Dropbox-Personal/ma_model.rds")
 
 sum_ma_model <- summary(ma_model)
 
@@ -444,15 +492,12 @@ pooled_es <- spread_draws(ma_model, b_bpd) %>%
 #Exponentiate to get odds instead of log-odds ratio
 fp_data <- bind_rows(study_es, pooled_es) %>%
   mutate(b_bpd = b_bpd %>% exp)
-```
 
 
-```{r plotting,echo=F}
 
 #Create title and subtitles for the plot
 main_title <- "Figure 1: Creating a meta-analysis-based prior for the effecitveness of BPD in preventing MACE"
 subtitle <- "This analysis synthesizes the 3 RCTs constituting the RCT evidence base for BPD prior to the CLEAR Trial."
-
 
 #Plot
 ggplot(data = fp_data,
@@ -508,7 +553,7 @@ We will show with MCMC and with conjugate normal
 meta_data <- data.frame(
   study = c("Goldberg et al., 2019", "Laufs et al., 2019", "Ray et al., 2019", "Nissen et al., 2023"),
   group = rep(c("Bempedoic Acid", "Placebo"), each = 4),
-  events = c(32, 9, 68, 831, 21, 0, 42, 927),
+  events = c(32, 9, 68, 831, 21, 1, 42, 927), ## add a 1 to make it computable
   total = c(522, 234, 1487, 6992, 257, 111, 742, 6978)
 )
 
@@ -521,7 +566,7 @@ ma_bpd_lnor <- round(ma_bpd_par$Estimate, 2)
 ma_bpd_lnor_sd <- round(ma_bpd_par$Est.Error, 2)
 
 # Convert 'group' to a factor and create a binary treatment indicator
-likelihood_data$bpd <- ifelse(likelihood_data$group == "Bempedoic Acid", 0.5, -0.5)
+likelihood_data$bpd <- ifelse(likelihood_data$group == "Bempedoic Acid", 1, 0)
 
 library(brms)
 # Define the prior
@@ -547,24 +592,23 @@ nissen_model <- brm(
   control = list(adapt_delta = 0.95)
 )
 
-saveRDS(nissen_model,"~/Library/CloudStorage/Dropbox-Personal/nissen_model.rds")
+#saveRDS(nissen_model,"~/Library/CloudStorage/Dropbox-Personal/nissen_model.rds")
 ```
 
 
 # Summary of the Nissen study model
 
 ```{r}
-nissen_model=readRDS("~/Library/CloudStorage/Dropbox-Personal/nissen_model.rds")
+#nissen_model=readRDS("~/Library/CloudStorage/Dropbox-Personal/nissen_model.rds")
 summary(nissen_model)
 ```
 
 Now let's show that this matches with our conjugate analysis
 
 ```{r}
-
 # Given data from the table
 n_treatment <- 6992
-events_treatment <- 819
+events_treatment <- 831
 n_control <- 6978
 events_control <- 927
 
@@ -579,7 +623,94 @@ se_log_or <- sqrt((1 / events_treatment) + (1 / (n_treatment - events_treatment)
 
 
 calc_conjugate_posterior(log_or = log_or,se = se_log_or,prior = list(mu=ma_bpd_lnor,sigma=ma_bpd_lnor_sd))
+pm=calc_conjugate_posterior(log_or = log_or,se = se_log_or,prior = list(mu=ma_bpd_lnor,sigma=ma_bpd_lnor_sd))
 
+## we shos that these are quite close and differ likely because we also place a prior on baseline effects here
 ```
 
+Now let's analysie the posterior in light of the old evidence
+
+First we simulate from each distribution:
+
+```{r}
+prior_sim <- rnorm(n = 10000, #Number of simulations
+      mean = ma_bpd_lnor, #The log-OR from our meta-analysis
+      sd = ma_bpd_lnor_sd) #The standard error of the log-OR from our meta-analysis
+
+
+#likelihood sim
+likelihood_sim <- rnorm(n = 10000,
+                   mean = log_or,
+                   sd = se_log_or)
+
+## posterior sim
+post_sim <- rnorm(n = 10000,
+                   mean = ma_bpd_lnor,
+                   sd = ma_bpd_lnor_sd)
+
+
+
+##Let us recap the 3 distributions we now have:
+# "prior_sim", which contains our prior (obtained from the meta-analysis)
+# "likelihood_sim" which contains the data from the CLEAR2 Ttrial
+# "post_sim" which contains the data from our posterior (the combination of the above 2)
+```
+
+
+```{r,echo=FALSE}
+#First, let us create a dataframe containing the above 3 simulations
+sims <- data.frame(sim_lnor = c(prior_sim, likelihood_sim, post_sim), #This column contains the results of our simulations (each of length 10,000)
+           sim_type = rep(c("Prior", "Likelihood", "Posterior"), each = 10000) #This column contains the labels of these simulations so we can identify which simulation each row belongs to
+           )
+
+#Arrange sim_type so that it shows up with the prior on top, the posterior at the bottom, and likelihood in the middle.
+sims$sim_type <- factor(sims$sim_type, levels = c("Posterior", "Likelihood", "Prior"))
+
+#Create title and subtitles for the plot
+main_title <- "Figure 2: Synthesis of the prior and likelihood to generate the posterior estimate of the effectiveness of Bempedoic ACid"
+subtitle <- "Prior evidence is based on a meta-analysis of 3 RCTs testing Bempedoic ACid"
+
+
+#Now, let us visualize this:
+#Plot
+ggplot(data = sims,
+       aes(y = sim_type,
+           x = exp(sim_lnor),
+           fill = sim_type
+       )) +
+  #Add Density plots
+  stat_halfeye(alpha = 0.7, .width = 0.95) +
+  #Set colors
+  scale_fill_manual(name = "Information source:",
+                    values = c("lightblue", "darkolivegreen", "salmon")) +
+  #Create title
+  ggtitle(main_title,
+          subtitle = subtitle) +
+  geom_vline(xintercept = 1, color = "black", 
+             lwd = 1, linetype = 2) +
+  #Set x-axis limit
+  coord_cartesian(xlim = c(0.4, 2.5)) +
+  #X and Y axes aesthetics
+  scale_y_discrete(name = NULL, expand = c(0, 0.03)) +
+  scale_x_continuous(name = "Odds Ratio",
+                     trans = "log",
+                     breaks = c(0.5, 1, 2)) +
+  #Set theme
+  theme_pubclean() +
+  theme(text = element_text(size = 23),
+        plot.title=element_text(face = "bold", hjust = 0.0, size = 18),
+        plot.subtitle = element_text(face = "bold", size = 10, hjust = 0.0, color = "grey45"),
+        axis.text.x = element_text(size = 20, face = "bold"),
+        axis.text.y = element_text(size = 15, face = "bold", hjust = 0.5),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_blank(),
+        axis.line = element_line(colour = "black", linewidth = 1.2),
+        plot.margin = margin(0.5, 1, 0.5, 1, "cm"),
+        legend.background = element_rect(fill = "transparent"),
+        legend.position = "bottom",
+        legend.text = element_text(size = 16, face = "bold"),
+        legend.key.width = unit(1.5, "cm"),
+        legend.key.height = unit(0.75, "cm")
+        )
+```
 
